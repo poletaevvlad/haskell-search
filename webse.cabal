@@ -1,0 +1,24 @@
+name:                webse
+version:             0.1.0.0
+-- synopsis:
+-- description:
+license:             MIT
+license-file:        LICENSE
+author:              Vlad Poletaev
+maintainer:          poletaev.vladislav@gmail.com
+-- copyright:
+category:            Web
+build-type:          Simple
+-- extra-source-files:  ChangeLog.md
+cabal-version:       >=1.10
+data-dir:            static
+data-files:          styles.css
+
+executable webse
+  main-is:             Main.hs
+  other-modules:       Paths_webse
+  -- other-extensions:
+  build-depends:       base >= 4.11,
+                       happstack-server >= 7.4.0
+  hs-source-dirs:      src
+  default-language:    Haskell2010
