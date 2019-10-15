@@ -24,6 +24,22 @@ spec = do
     
     it "must format files more then 10 MiB" $ do
       formatFileSize 498073600 `shouldBe` "475 MiB"
+  
+  describe "escapeFileName" $ do
+    it "returns value as is if valid" $ do
+      escapeFileName "validfilename" `shouldBe` "validfilename"
+    it "substitutes spaces" $ do
+      escapeFileName "valid file name" `shouldBe` "valid-file-name"
+    it "converts to lowercase" $ do
+      escapeFileName "ValidName" `shouldBe` "validname"
+    it "ignores double spaces" $ do
+      escapeFileName "valid   name" `shouldBe` "valid-name"
+    it "ignores punctuation" $ do
+      escapeFileName "valid, - name" `shouldBe` "valid-name"
+    it "ignores apostrophies" $ do
+      escapeFileName "don't haven't" `shouldBe` "dont-havent"
+    it "supports non latin scripts" $ do
+      escapeFileName "Правильное название" `shouldBe` "правильное-название"
     
 
     
