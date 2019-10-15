@@ -94,6 +94,14 @@ h1{
     text-align: center;
 }
 
+h1::before{
+    content: "--- "
+}
+
+h1::after{
+    content: " ---"
+}
+
 
 .header{
     height: 40px;

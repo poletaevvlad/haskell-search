@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import Control.Monad
@@ -8,13 +10,19 @@ import Happstack.Server (
     toResponse, 
     ok, 
     dir, 
+    nullDir,
     serveDirectory, 
     Browsing(DisableBrowsing))
+
+import Layout(appLayout)
 
 
 main :: IO ()
 main = do
+    putStrLn "Launchig server"
     static_dir <- getDataFileName ""
     simpleHTTP nullConf $ msum [
+        do nullDir 
+           ok $ toResponse $ appLayout "Hello world" "123",
         dir "static" $ serveDirectory DisableBrowsing [] static_dir]
     
