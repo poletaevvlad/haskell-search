@@ -1,9 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Layout(appLayout) where
+module Layout(appLayout, paginator) where
 
 
 import Text.Blaze ((!))
+import Text.Blaze(string, toValue)
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 
@@ -29,3 +30,22 @@ appLayout title content =
             H.div ! A.class_ "document" $ do
                 headerLayout
                 content
+
+
+paginator :: (Int -> String) -> Int -> Int -> H.Html
+paginator urlFactory page pagesCount 
+  | pagesCount <= 1 = mempty
+  | otherwise = let 
+      pageIndicator = string (show (page + 1) ++ "/" ++ show pagesCount)
+      
+      paginatorButton :: String -> Int -> H.Html
+      paginatorButton label pageIndex
+        | pageIndex < 0 || pageIndex >= pagesCount = mempty
+        | otherwise = H.a (string label) ! A.href (toValue $ urlFactory pageIndex)
+
+    in H.div ! A.class_ "paginator" $ do
+        paginatorButton "Previous page" (page - 1)
+        " -- "
+        pageIndicator
+        " -- "
+        paginatorButton "Next page" (page + 1)
