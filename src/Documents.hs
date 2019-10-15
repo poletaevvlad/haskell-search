@@ -1,16 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Documents(formatFileSize, escapeFileName) where
+module Documents(Document(Document), url, name, excerpt, fileSize, wordsCount, 
+                 formatFileSize, escapeFileName) where
 
 import Numeric(showFFloat, showInt)
 import Data.Char(toLower, isNumber, isLetter, isSeparator)
 
--- data Document = Document { 
---     url :: String, 
---     name :: String, 
---     excerpt :: String, 
---     fileSize :: Int, 
---     wordsCount :: Int }
+data Document = Document { 
+    url :: String, 
+    name :: String, 
+    excerpt :: String, 
+    fileSize :: Int, 
+    wordsCount :: Int }
 
 
 formatFileSize :: Int -> String
@@ -30,7 +31,7 @@ formatFileSize val
 
 
 escapeFileName :: String -> String
-escapeFileName name = reverse $ foldl processLetter "" name 
+escapeFileName fileName = reverse $ foldl processLetter "" fileName 
   where
     shouldKeep c = isLetter c || isNumber c
     shouldSubstitute = isSeparator

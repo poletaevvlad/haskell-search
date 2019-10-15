@@ -40,6 +40,3 @@ spec = do
       escapeFileName "don't haven't" `shouldBe` "dont-havent"
     it "supports non latin scripts" $ do
       escapeFileName "Правильное название" `shouldBe` "правильное-название"
-    
-
-    

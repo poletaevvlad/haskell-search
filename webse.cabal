@@ -31,7 +31,8 @@ library webse-lib
                        blaze-markup >= 0.8.0.0,
                        blaze-html >= 0.9.0.0
   exposed-modules:     Layout,
-                       Documents
+                       Documents,
+                       DocViews
   hs-source-dirs:      src
 
 
@@ -53,5 +54,6 @@ test-suite spec
                        blaze-html >= 0.9.0.0,
                        webse-lib
   other-modules:       LayoutSpec,
-                       DocumentsSpec
+                       DocumentsSpec,
+                       DocViewsSpec
   build-tool-depends:  hspec-discover:hspec-discover == 2.*
