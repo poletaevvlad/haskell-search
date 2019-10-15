@@ -1,3 +1,154 @@
+@import url('https://fonts.googleapis.com/css?family=Inconsolata&display=swap');
+
 body{
+    background-color: #EBEAE6;
+    font-size: 14px;
+    font-family: "Inconsolata", monospace;
+    background-image: url("Images/Background.svg");
+    margin: 0;
+    padding: 0;
+}
+
+a{
+    text-decoration: none;
+}
+
+a:hover{
+    text-decoration: underline;
+}
+
+a::before{
+    content: "[";
+}
+
+a::after{
+    content: "]";
+}
+
+*{
+    line-height: 20px;
+}
+
+.document{
+    width: 700px;
+    margin: 40px auto;
+}
+
+
+.index{
+    font-size: 0;
+    display: flex;
+    margin-bottom: 40px;
+}
+
+.index .label{
+    font-size: 14px;
+}
+
+.index a{
+    padding: 0 5px;
+    font-size: 14px;
+}
+
+.index a.current{
+    font-weight: bold;
+    text-decoration: none;
+    color: black;
+    cursor: default;
+}
+
+.index-items{
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.doc{
+    margin-bottom: 20px;
+}
+
+.doc-title{
+    font-weight: bold;
+}
+
+.doc-description{
+    margin-left: 18px;
+    color: rgba(0, 0, 0, 0.85);
+}
+
+.doc-meta{
+    float: right;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.paginator{
+    text-align: center;
+}
+
+h1{
+    font-size: 14px;
+    margin: 0;
+    overflow: hidden;
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+
+.header{
+    height: 40px;
+    display: flex;
+    margin-bottom: 40px;
+
+}
+
+.logo{
+    width: 110px;
+    height: 36px;
+    background-image: url("./Images/Logo.svg");
+    display: inline-block;
+    flex: 0 0 110px;
+}
+
+.logo::before, .logo::after{
+    display: none;
+}
+
+.search-box{
+    flex: 1 1;
+    margin-left: 36px;
+}
+
+.search{
+    height: 19px;
+    padding: 0 2px;
+    margin: 0 -2px;
+    border: 0;
+    width: 100%;
+    font-size: 14px;
+    position: relative;
+    font-family: Inconsolata, monospace;
+    background-color: #EBEAE6;
+}
+
+.search:focus{
+    background-color: rgb(245, 244, 240);
+}
+
+
+.search-field{
+    position: relative;
+    height: 19px;
+    font-size: 0;
+}
+
+.search-field::before{
+    content: " ";
+    font-size: 0;
+    position: absolute;
+    left: -3px;
+    right: -3px;
+    bottom: -1px;
+    height: 4px;
     background-color: gray;
 }
