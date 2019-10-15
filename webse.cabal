@@ -32,6 +32,7 @@ library webse-lib
                        blaze-html >= 0.9.0.0
   exposed-modules:     Presentation.Layout,
                        Presentation.DocViews,
+                       Presentation.AlphabeticalIndex,
                        Documents
   hs-source-dirs:      src
 
@@ -55,5 +56,6 @@ test-suite spec
                        webse-lib
   other-modules:       Presentation.LayoutSpec,
                        Presentation.DocViewsSpec,
+                       Presentation.AlphabeticalIndexSpec
                        DocumentsSpec                       
   build-tool-depends:  hspec-discover:hspec-discover == 2.*
