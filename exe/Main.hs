@@ -14,7 +14,7 @@ import Happstack.Server (
     serveDirectory, 
     Browsing(DisableBrowsing))
 
-import Layout(appLayout)
+import Presentation.Layout(appLayout)
 
 
 main :: IO ()

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module DocViews where
+module Presentation.DocViews where
 
 import Text.Blaze ((!))
 import Text.Blaze(toValue)

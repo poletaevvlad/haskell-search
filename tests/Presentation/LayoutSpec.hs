@@ -1,7 +1,7 @@
-module LayoutSpec(spec) where
+module Presentation.LayoutSpec(spec) where
 
 import Test.Hspec
-import Layout(paginator)
+import Presentation.Layout(paginator)
 import Text.Blaze.Html.Renderer.String
 
 

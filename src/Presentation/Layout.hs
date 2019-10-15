@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Layout(appLayout, paginator) where
+module Presentation.Layout(appLayout, paginator) where
 
 
 import Text.Blaze ((!))

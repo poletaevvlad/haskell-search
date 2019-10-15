@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module DocViewsSpec (spec) where
+module Presentation.DocViewsSpec (spec) where
 
 import Test.Hspec
-import DocViews
+import Presentation.DocViews
 import Documents
 import Text.Blaze.Html.Renderer.String
 

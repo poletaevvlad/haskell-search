@@ -30,9 +30,9 @@ library webse-lib
                        happstack-server >= 7.4.0,
                        blaze-markup >= 0.8.0.0,
                        blaze-html >= 0.9.0.0
-  exposed-modules:     Layout,
-                       Documents,
-                       DocViews
+  exposed-modules:     Presentation.Layout,
+                       Presentation.DocViews,
+                       Documents
   hs-source-dirs:      src
 
 
@@ -53,7 +53,7 @@ test-suite spec
   build-depends:       hspec == 2.*,
                        blaze-html >= 0.9.0.0,
                        webse-lib
-  other-modules:       LayoutSpec,
-                       DocumentsSpec,
-                       DocViewsSpec
+  other-modules:       Presentation.LayoutSpec,
+                       Presentation.DocViewsSpec,
+                       DocumentsSpec                       
   build-tool-depends:  hspec-discover:hspec-discover == 2.*
