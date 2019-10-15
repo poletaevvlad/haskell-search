@@ -30,7 +30,8 @@ library webse-lib
                        happstack-server >= 7.4.0,
                        blaze-markup >= 0.8.0.0,
                        blaze-html >= 0.9.0.0
-  exposed-modules:     Layout
+  exposed-modules:     Layout,
+                       Documents
   hs-source-dirs:      src
 
 
@@ -51,5 +52,6 @@ test-suite spec
   build-depends:       hspec == 2.*,
                        blaze-html >= 0.9.0.0,
                        webse-lib
-  other-modules:       LayoutSpec
+  other-modules:       LayoutSpec,
+                       DocumentsSpec
   build-tool-depends:  hspec-discover:hspec-discover == 2.*
