@@ -33,6 +33,7 @@ library webse-lib
   exposed-modules:     Presentation.Layout,
                        Presentation.DocViews,
                        Presentation.AlphabeticalIndex,
+                       Search.Porter,
                        Documents
   hs-source-dirs:      src
 
@@ -56,6 +57,7 @@ test-suite spec
                        webse-lib
   other-modules:       Presentation.LayoutSpec,
                        Presentation.DocViewsSpec,
-                       Presentation.AlphabeticalIndexSpec
+                       Presentation.AlphabeticalIndexSpec,
+                       Search.PorterSpec,
                        DocumentsSpec                       
   build-tool-depends:  hspec-discover:hspec-discover == 2.*
