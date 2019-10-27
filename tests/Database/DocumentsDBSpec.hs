@@ -11,6 +11,19 @@ import Documents
 import Data.Maybe
 
 
+prepareDB :: [(String, String, String, Int, Int)] -> IO (Database, Int)
+prepareDB docs = 
+  do
+    db <- _createInMemory ""
+    let conn = _getRawConnection db  
+    SQLite.executeMany conn insertQuery docs
+    lastId <- fromIntegral <$> SQLite.lastInsertRowId conn
+    return (db, lastId)
+  where
+    insertQuery = "INSERT INTO documents (name, url, excerpt, wordsCount, fileSize) \
+                  \VALUES (?, ?, ?, ?, ?)"
+
+
 spec :: Spec
 spec = do
   describe "loadDatabase" $ do
@@ -31,15 +44,11 @@ spec = do
 
   let doc1 = ("Document name", "document-name", "Document excerpt.", 2, 45) :: (String, String, String, Int, Int)
   let doc2 = ("Another document", "another-document", "Second document", 5, 12) :: (String, String, String, Int, Int)
-  let insertQuery = "INSERT INTO documents (name, url, excerpt, wordsCount, fileSize) VALUES (?, ?, ?, ?, ?)"
 
   describe "retreiving documents" $ do
     context "when document exisist in the database" $ do
       it "shoud retrieve document by its id" $ do      
-        db <- _createInMemory ""
-        let conn = _getRawConnection db  
-        SQLite.executeMany conn insertQuery [doc1, doc2]
-        doc2Id <- fromIntegral <$> SQLite.lastInsertRowId conn
+        (db, doc2Id) <- prepareDB [doc1, doc2]
         doc <- getDocumentById db doc2Id
         
         let d = fromJust doc
@@ -49,13 +58,24 @@ spec = do
         getDocFileSize d `shouldBe` 12
         getDocWordsCount d `shouldBe` 5
         closeDatabase db
+
+      it "should retrieve document by url" $ do
+        (db, doc2Id) <- prepareDB [doc1, doc2]
+        doc <- getDocumentByUrl db "another-document"
+        let d = fromJust doc
+        getDocId d `shouldBe` doc2Id
+        getDocName d `shouldBe` "Another document"
     
     context "when no such document is present" $ do
       it "should return Nothing when searching by id" $ do
-        db <- _createInMemory ""
-        let conn = _getRawConnection db  
-        SQLite.executeMany conn insertQuery [doc1, doc2]
+        (db, _) <- prepareDB [doc1, doc2]
         doc <- getDocumentById db (negate 4)
+        isNothing doc `shouldBe` True
+        closeDatabase db
+      
+      it "should return Nothing when searching by url" $ do
+        (db, _) <- prepareDB [doc1, doc2]
+        doc <- getDocumentByUrl db "non-existant-url"
         isNothing doc `shouldBe` True
         closeDatabase db
 

@@ -1,11 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Database.DocumentsDB (
+  Database,
   loadDatabase, 
   closeDatabase, 
   _createInMemory, 
   _getRawConnection,
-  getDocumentById) where 
+  getDocumentById,
+  getDocumentByUrl) where 
 
 import qualified Database.SQLite.Simple as SQLite
 import qualified Data.Text as Text
@@ -44,10 +46,19 @@ closeDatabase :: Database -> IO ()
 closeDatabase (Database _ conn) = SQLite.close conn
 
 
+maybeSingleResult :: [a] -> Maybe a
+maybeSingleResult res
+  | length res == 0 = Nothing
+  | otherwise       = Just $ head res
+
+
 getDocumentById :: Database -> Int -> IO (Maybe Document)
-getDocumentById (Database _ conn) docId = do
-  res <- SQLite.query conn "SELECT rowid, url, name, excerpt, fileSize, wordsCount \
-                           \FROM documents WHERE rowid = ? LIMIT 1" (SQLite.Only docId) :: IO [Document]
-  if length res == 0
-    then return Nothing
-    else return $ Just $ head res
+getDocumentById (Database _ conn) docId = maybeSingleResult <$> (
+  SQLite.query conn "SELECT rowid, url, name, excerpt, fileSize, wordsCount \
+                    \FROM documents WHERE rowid = ? LIMIT 1" (SQLite.Only docId) :: IO [Document])
+  
+
+getDocumentByUrl :: Database -> String -> IO (Maybe Document)
+getDocumentByUrl (Database _ conn) url = maybeSingleResult <$> (
+  SQLite.query conn "SELECT rowid, url, name, excerpt, fileSize, wordsCount \
+                    \FROM documents WHERE url = ? LIMIT 1" (SQLite.Only url) :: IO [Document])
