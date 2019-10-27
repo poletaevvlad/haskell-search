@@ -1,17 +1,35 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Documents(Document(Document), url, name, excerpt, fileSize, wordsCount, 
-                 formatFileSize, escapeFileName) where
+module Documents(
+  Document(Document), 
+  getDocId, 
+  getDocUrl, 
+  getDocName, 
+  getDocExcerpt, 
+  getDocFileSize,
+  getDocWordsCount,
+  formatFileSize, 
+  escapeFileName) where
 
 import Numeric(showFFloat, showInt)
 import Data.Char(toLower, isNumber, isLetter, isSeparator)
+import Database.SQLite.Simple.FromRow(FromRow(fromRow), field)
+import Data.Text(Text)
 
-data Document = Document { 
-    url :: String, 
-    name :: String, 
-    excerpt :: String, 
-    fileSize :: Int, 
-    wordsCount :: Int }
+
+data Document = 
+  Document 
+    { getDocId :: Int
+    , getDocUrl :: Text
+    , getDocName :: Text
+    , getDocExcerpt :: Text
+    , getDocFileSize :: Int
+    , getDocWordsCount :: Int
+    } deriving (Read, Show)
+
+
+instance FromRow Document where
+  fromRow = Document <$> field <*> field <*> field <*> field <*> field <*> field
 
 
 formatFileSize :: Int -> String

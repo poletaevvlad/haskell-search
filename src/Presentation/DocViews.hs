@@ -13,10 +13,10 @@ import Documents
 documentPreview :: Document -> H.Html
 documentPreview doc = H.div ! A.class_ "doc" $ do
   H.div (H.toHtml meta) ! A.class_ "doc-meta"
-  H.a (H.toHtml $ name doc) ! A.class_ "doc-title" ! A.href (toValue $ url doc)
-  H.div (H.toHtml $ excerpt doc) ! A.class_ "doc-description"
+  H.a (H.toHtml $ getDocName doc) ! A.class_ "doc-title" ! A.href (toValue $ getDocUrl doc)
+  H.div (H.toHtml $ getDocExcerpt doc) ! A.class_ "doc-description"
   where 
     meta = (show wordsNum) ++ wordsSuffix ++ fileSizeStr
-    wordsNum = wordsCount doc
+    wordsNum = getDocWordsCount doc
     wordsSuffix = if wordsNum == 1 then " word, " else " words, "
-    fileSizeStr = formatFileSize $ fileSize doc
+    fileSizeStr = formatFileSize $ getDocFileSize doc
