@@ -2,12 +2,13 @@
 
 module Database.DocumentsDB (
   Database,
-  loadDatabase, 
-  closeDatabase, 
-  _createInMemory, 
+  loadDatabase,
+  closeDatabase,
+  _createInMemory,
   _getRawConnection,
   getDocumentById,
-  getDocumentByUrl) where 
+  getDocumentByUrl,
+  getDocumentContent) where
 
 import qualified Database.SQLite.Simple as SQLite
 import qualified Data.Text as Text
@@ -56,9 +57,15 @@ getDocumentById :: Database -> Int -> IO (Maybe Document)
 getDocumentById (Database _ conn) docId = maybeSingleResult <$> (
   SQLite.query conn "SELECT rowid, url, name, excerpt, fileSize, wordsCount \
                     \FROM documents WHERE rowid = ? LIMIT 1" (SQLite.Only docId) :: IO [Document])
-  
+
 
 getDocumentByUrl :: Database -> String -> IO (Maybe Document)
 getDocumentByUrl (Database _ conn) url = maybeSingleResult <$> (
   SQLite.query conn "SELECT rowid, url, name, excerpt, fileSize, wordsCount \
                     \FROM documents WHERE url = ? LIMIT 1" (SQLite.Only url) :: IO [Document])
+
+
+getDocumentContent :: Database -> Document -> IO [String]
+getDocumentContent (Database path _) doc = do
+  let filePath = path ++ "/docs/" ++ (show $ getDocId doc)
+  lines <$> (readFile filePath)
