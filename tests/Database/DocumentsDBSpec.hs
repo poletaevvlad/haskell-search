@@ -11,6 +11,13 @@ import Documents
 import Data.Maybe
 
 
+type DocTuple = (String, String, String, Int, Int)
+
+insertQuery :: SQLite.Query
+insertQuery = "INSERT INTO documents (name, url, excerpt, wordsCount, fileSize) \
+                  \VALUES (?, ?, ?, ?, ?)"
+
+
 prepareDB :: [(String, String, String, Int, Int)] -> IO (Database, Int)
 prepareDB docs =
   do
@@ -19,9 +26,6 @@ prepareDB docs =
     SQLite.executeMany conn insertQuery docs
     lastId <- fromIntegral <$> SQLite.lastInsertRowId conn
     return (db, lastId)
-  where
-    insertQuery = "INSERT INTO documents (name, url, excerpt, wordsCount, fileSize) \
-                  \VALUES (?, ?, ?, ?, ?)"
 
 
 spec :: Spec
@@ -44,8 +48,8 @@ spec = do
         rows `shouldBe` [("table", "documents"), ("index", "documents_url")]
         SQLite.close conn)
 
-  let doc1 = ("Document name", "document-name", "Document excerpt.", 2, 45) :: (String, String, String, Int, Int)
-  let doc2 = ("Another document", "another-document", "Second document", 5, 12) :: (String, String, String, Int, Int)
+  let doc1 = ("Document name", "document-name", "Document excerpt.", 2, 45) :: DocTuple
+  let doc2 = ("Another document", "another-document", "Second document", 5, 12) :: DocTuple
 
   describe "retreiving documents" $ do
     context "when document exisist in the database" $ do
@@ -93,3 +97,37 @@ spec = do
         result `shouldBe` ["line one", "line two", "line three"]
         closeDatabase db)
 
+  describe "storeDocument" $ do
+    it "should store document in the database and in the filesystem" $ do
+      withSystemTempDirectory "database" (\path -> do
+        db <- loadDatabase path
+        doc <- storeDocument db "Document title" ["first line", "second line", "third line"]
+
+        getDocName doc `shouldBe` "Document title"
+        getDocUrl doc `shouldBe` "document-title"
+        getDocExcerpt doc `shouldBe` "first line"
+        getDocWordsCount doc `shouldBe` 6
+        getDocFileSize doc `shouldBe` 34
+
+        savedFile <- readFile (path ++ "/docs/" ++ (show $ getDocId doc))
+        savedFile `shouldBe` "first line\nsecond line\nthird line\n"
+        closeDatabase db
+
+        conn <- SQLite.open (path ++ "/index.sqlite")
+        let query = "SELECT rowid, url, name, excerpt, fileSize, wordsCount \
+                    \FROM documents WHERE rowid = ?"
+        res <- SQLite.query conn query $ SQLite.Only $ getDocId doc :: IO [Document]
+        head res `shouldBe` doc)
+
+    it "should generate unique urls" $ do
+      withSystemTempDirectory "database" (\path -> do
+        db <- loadDatabase path
+
+        let conn = _getRawConnection db
+        let docs = [("D1", "url", "D1.", 2, 45), ("D1", "url-1", "D1.", 2, 45),
+                    ("D1", "url-3", "D1.", 2, 45)] :: [DocTuple]
+        SQLite.executeMany conn insertQuery docs
+
+        doc <- storeDocument db "URL" ["a", "b"]
+        closeDatabase db
+        getDocUrl doc `shouldBe` "url-2")

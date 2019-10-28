@@ -8,14 +8,17 @@ module Database.DocumentsDB (
   _getRawConnection,
   getDocumentById,
   getDocumentByUrl,
-  getDocumentContent) where
+  getDocumentContent,
+  storeDocument) where
 
 import qualified Database.SQLite.Simple as SQLite
 import qualified Data.Text as Text
 import Data.List.Split (endBy)
+import Data.List
 import Paths_webse
 import Documents
 import System.Directory
+import TextUtils.Processing
 
 data Database = Database FilePath SQLite.Connection
 
@@ -71,3 +74,29 @@ getDocumentContent :: Database -> Document -> IO [String]
 getDocumentContent (Database path _) doc = do
   let filePath = path ++ "/docs/" ++ (show $ getDocId doc)
   lines <$> (readFile filePath)
+
+
+storeDocument :: Database -> String -> [String] -> IO Document
+storeDocument (Database path conn) title contents = do
+  let fileContents = mconcat $ intersperse "\n" contents
+  let plainUrl = escapeFileName title
+
+  let urlsQuery = "SELECT url FROM documents WHERE url LIKE ?"
+  urls <- SQLite.query conn urlsQuery (SQLite.Only (plainUrl ++ "%")) :: IO [SQLite.Only String]
+  let urlStrings = map SQLite.fromOnly urls
+  let candidateUrls = plainUrl:(map ((\x -> plainUrl ++ "-" ++ x) . show) ([2..] :: [Int]))
+  let url = head $ filter (`notElem` urlStrings) candidateUrls
+
+  let doc = Document { getDocId = 0
+                     , getDocUrl = url
+                     , getDocName = title
+                     , getDocExcerpt = getExcerpt 30 $ head contents
+                     , getDocFileSize = foldl (\s x -> s + 1 + length x) 0 contents
+                     , getDocWordsCount = length $ splitWords fileContents }
+
+  SQLite.execute conn "INSERT INTO documents (url, name, excerpt, fileSize, wordsCount) \
+                      \VALUES (?, ?, ?, ?, ?)" doc
+  insertedId <- SQLite.lastInsertRowId conn
+
+  writeFile (path ++ "/docs/" ++ show insertedId) (fileContents ++ "\n")
+  return doc { getDocId = fromIntegral insertedId }

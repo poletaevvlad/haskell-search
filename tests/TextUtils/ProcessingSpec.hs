@@ -22,3 +22,5 @@ spec = do
       splitWords "shouldn't don't" `shouldBe` ["shouldnt", "dont"]
     it "should ignore trailing and leading spaces and punctuation marks" $ do
       splitWords "  hello --" `shouldBe` ["hello"]
+    it "should correctly split text with newlines" $ do
+      splitWords "hello\nworld" `shouldBe` ["hello", "world"]
