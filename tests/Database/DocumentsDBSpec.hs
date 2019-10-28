@@ -9,8 +9,6 @@ import System.Directory
 import qualified Database.SQLite.Simple as SQLite
 import Documents
 import Data.Maybe
-import System.IO
-import System.Directory
 
 
 prepareDB :: [(String, String, String, Int, Int)] -> IO (Database, Int)
@@ -34,6 +32,9 @@ spec = do
         db <- loadDatabase path
         closeDatabase db
 
+        docsDirExists <- doesDirectoryExist (path ++ "/docs/")
+        docsDirExists `shouldBe` True
+
         let dbName = path ++ "/index.sqlite"
         fileCreated <- doesFileExist dbName
         fileCreated `shouldBe` True
@@ -41,8 +42,7 @@ spec = do
         conn <- SQLite.open dbName
         rows <- SQLite.query_ conn "SELECT type, name FROM sqlite_master" :: IO [(String, String)]
         rows `shouldBe` [("table", "documents"), ("index", "documents_url")]
-        SQLite.close conn
-        )
+        SQLite.close conn)
 
   let doc1 = ("Document name", "document-name", "Document excerpt.", 2, 45) :: (String, String, String, Int, Int)
   let doc2 = ("Another document", "another-document", "Second document", 5, 12) :: (String, String, String, Int, Int)

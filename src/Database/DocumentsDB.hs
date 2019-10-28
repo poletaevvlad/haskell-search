@@ -15,6 +15,7 @@ import qualified Data.Text as Text
 import Data.List.Split (endBy)
 import Paths_webse
 import Documents
+import System.Directory
 
 data Database = Database FilePath SQLite.Connection
 
@@ -29,6 +30,7 @@ loadDatabase :: FilePath -> IO Database
 loadDatabase path = do
   conn <- SQLite.open (path ++ "/index.sqlite")
   initializeDB conn
+  createDirectoryIfMissing True (path ++ "/docs/")
   return $ Database path conn
 
 

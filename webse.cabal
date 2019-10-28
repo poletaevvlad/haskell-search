@@ -33,7 +33,8 @@ library webse-lib
                        blaze-html >= 0.9.0.0,
                        sqlite-simple >= 0.4.0.0,
                        text >= 1.2.0.0,
-                       split >= 0.2.0.0
+                       split >= 0.2.0.0,
+                       directory >= 1.3.0.0,
   exposed-modules:     Presentation.Layout,
                        Presentation.DocViews,
                        Presentation.AlphabeticalIndex,
