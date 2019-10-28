@@ -1,7 +1,7 @@
-module Database.ProcessingSpec (spec) where
+module TextUtils.ProcessingSpec (spec) where
 
 import Test.Hspec
-import Database.Processing
+import TextUtils.Processing
 
 spec :: Spec
 spec = do

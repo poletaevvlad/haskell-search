@@ -40,7 +40,8 @@ library webse-lib
                        Presentation.AlphabeticalIndex,
                        Search.Porter,
                        Documents,
-                       Database.DocumentsDB
+                       Database.DocumentsDB,
+                       TextUtils.Processing
   other-modules:       Paths_webse
   hs-source-dirs:      src
 
@@ -70,5 +71,6 @@ test-suite spec
                        Presentation.AlphabeticalIndexSpec,
                        Search.PorterSpec,
                        DocumentsSpec,
-                       Database.DocumentsDBSpec
+                       Database.DocumentsDBSpec,
+                       TextUtils.ProcessingSpec
   build-tool-depends:  hspec-discover:hspec-discover == 2.*

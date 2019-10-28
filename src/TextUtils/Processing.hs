@@ -1,4 +1,4 @@
-module Database.Processing (getExcerpt) where
+module TextUtils.Processing (getExcerpt) where
 
 import Data.Char
 
@@ -18,4 +18,3 @@ getExcerpt len text = nonLetters ++ word ++ (getExcerpt (len - 1) rest)
           let (v, next) = dropWhileBoth predicate cs
           in (c:v, next)
       | otherwise = ([], string)
-
