@@ -5,24 +5,22 @@ module Main where
 import Control.Monad
 import Paths_webse
 import Happstack.Server (
-    nullConf, 
-    simpleHTTP, 
-    toResponse, 
-    ok, 
-    dir, 
-    nullDir,
-    serveDirectory, 
+    nullConf,
+    simpleHTTP,
+    serveDirectory,
+    dir,
     Browsing(DisableBrowsing))
 
-import Presentation.Layout(appLayout)
+import Pages.DocumentPage
+import Database.DocumentsDB(loadDatabase)
 
 
 main :: IO ()
 main = do
-    putStrLn "Launchig server"
-    static_dir <- getDataFileName ""
-    simpleHTTP nullConf $ msum [
-        do nullDir 
-           ok $ toResponse $ appLayout "Hello world" "123",
-        dir "static" $ serveDirectory DisableBrowsing [] static_dir]
-    
+  putStrLn "Launchig server"
+  static_dir <- getDataFileName ""
+  db <- loadDatabase "/data/text-db"
+
+  simpleHTTP nullConf $ msum [
+    documentPageHandler db,
+    dir "static" $ serveDirectory DisableBrowsing [] static_dir]
