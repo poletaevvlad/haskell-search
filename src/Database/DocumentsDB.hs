@@ -13,6 +13,7 @@ module Database.DocumentsDB (
   AlphaIndexEntry(All, Character, Symbols),
   buildAlphaIndex,
   Range(Range),
+  paginationRange,
   queryDocuments) where
 
 import qualified Database.SQLite.Simple as SQLite
@@ -132,7 +133,12 @@ buildAlphaIndex (Database _ conn) =
     entryFromChar c = Character c
 
 
-data Range = Range Int Int
+data Range = Range Int Int deriving (Show, Eq)
+
+
+paginationRange :: Int -> Int -> Range
+paginationRange pageSize pageNumber =
+  Range ((pageNumber - 1) * pageSize) pageSize
 
 
 queryDocuments :: Database -> AlphaIndexEntry -> Range -> IO [Document]

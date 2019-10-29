@@ -178,3 +178,8 @@ spec = do
       res <- queryDocuments db (Symbols) (Range 0 5)
       map getDocName res `shouldBe` ["-- document --"]
 
+  describe "paginationRange" $ do
+    it "should generate range for the first page" $ do
+      paginationRange 20 1 `shouldBe` Range 0 20
+    it "should generate range for next pages" $ do
+      paginationRange 20 2 `shouldBe` Range 20 20
