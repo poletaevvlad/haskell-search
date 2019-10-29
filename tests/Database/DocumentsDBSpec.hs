@@ -131,3 +131,25 @@ spec = do
         doc <- storeDocument db "URL" ["a", "b"]
         closeDatabase db
         getDocUrl doc `shouldBe` "url-2")
+
+  describe "buildAlphaIndex" $ do
+    it "should correctly generate alphabetical index" $ do
+      (db, _) <- prepareDB [("A doc", "url-1", "D1.", 2, 45),
+                            ("B doc", "url-2", "D1.", 2, 45),
+                            ("B doc", "url-3", "D1.", 2, 45)]
+      entries <- buildAlphaIndex db
+      entries `shouldBe` [Character 'A', Character 'B']
+
+    it "should covnert to upplercase letters" $ do
+      (db, _) <- prepareDB [("a doc", "url-1", "D1.", 2, 45),
+                            ("b doc", "url-2", "D1.", 2, 45),
+                            ("b doc", "url-3", "D1.", 2, 45)]
+      entries <- buildAlphaIndex db
+      entries `shouldBe` [Character 'A', Character 'B']
+
+    it "should generate symbols " $ do
+      (db, _) <- prepareDB [("a doc", "url-1", "D1.", 2, 45),
+                            ("# doc", "url-2", "D1.", 2, 45),
+                            ("% doc", "url-3", "D1.", 2, 45)]
+      entries <- buildAlphaIndex db
+      entries `shouldBe` [Character 'A', Symbols]

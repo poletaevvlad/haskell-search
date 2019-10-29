@@ -9,7 +9,9 @@ module Database.DocumentsDB (
   getDocumentById,
   getDocumentByUrl,
   getDocumentContent,
-  storeDocument) where
+  storeDocument,
+  AlphaIndexEntry(All, Character, Symbols),
+  buildAlphaIndex) where
 
 import qualified Database.SQLite.Simple as SQLite
 import qualified Data.Text as Text
@@ -100,3 +102,27 @@ storeDocument (Database path conn) title contents = do
 
   writeFile (path ++ "/docs/" ++ show insertedId) (fileContents ++ "\n")
   return doc { getDocId = fromIntegral insertedId }
+
+
+data AlphaIndexEntry = All | Character Char | Symbols
+  deriving (Show, Eq)
+
+
+buildAlphaIndex :: Database -> IO [AlphaIndexEntry]
+buildAlphaIndex (Database _ conn) =
+  map (entryFromChar . head . SQLite.fromOnly) <$> responce
+  where
+    responce :: IO [SQLite.Only String]
+    responce = SQLite.query_ conn query
+
+    query :: SQLite.Query
+    query = "SELECT DISTINCT CASE \
+            \  WHEN substr(name, 1, 1) BETWEEN 'A' AND 'Z' THEN substr(name, 1, 1) \
+            \  WHEN substr(name, 1, 1) BETWEEN 'a' AND 'z' THEN upper(substr(name, 1, 1)) \
+            \  ELSE '~' \
+            \END AS letter \
+            \FROM documents ORDER BY letter"
+
+    entryFromChar :: Char -> AlphaIndexEntry
+    entryFromChar '~' = Symbols
+    entryFromChar c = Character c
