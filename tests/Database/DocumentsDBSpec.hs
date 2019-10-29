@@ -153,3 +153,28 @@ spec = do
                             ("% doc", "url-3", "D1.", 2, 45)]
       entries <- buildAlphaIndex db
       entries `shouldBe` [Character 'A', Symbols]
+
+  describe "queryDocuments" $ do
+    let docs = [("A doc", "url-1", "D1.", 2, 45)
+               ,("D doc", "url-2", "D1.", 2, 45)
+               ,("B doc 1", "url-2", "D1.", 2, 45)
+               ,("B doc 2", "url-2", "D1.", 2, 45)
+               ,("B doc 3", "url-2", "D1.", 2, 45)
+               ,("-- document --", "url-3", "D1.", 2, 45)
+               ] :: [DocTuple]
+
+    it "should return all documents" $ do
+      (db, _) <- prepareDB docs
+      res <- queryDocuments db All (Range 0 3)
+      map getDocName res `shouldBe` ["-- document --", "A doc", "B doc 1"]
+
+    it "should return documents with names starting with a specific character" $ do
+      (db, _) <- prepareDB docs
+      res <- queryDocuments db (Character 'B') (Range 1 2)
+      map getDocName res `shouldBe` ["B doc 2", "B doc 3"]
+
+    it "should return documents with names starting with symbols" $ do
+      (db, _) <- prepareDB docs
+      res <- queryDocuments db (Symbols) (Range 0 5)
+      map getDocName res `shouldBe` ["-- document --"]
+

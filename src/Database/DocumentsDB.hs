@@ -11,9 +11,12 @@ module Database.DocumentsDB (
   getDocumentContent,
   storeDocument,
   AlphaIndexEntry(All, Character, Symbols),
-  buildAlphaIndex) where
+  buildAlphaIndex,
+  Range(Range),
+  queryDocuments) where
 
 import qualified Database.SQLite.Simple as SQLite
+import Database.SQLite.Simple (NamedParam((:=)))
 import qualified Data.Text as Text
 import Data.List.Split (endBy)
 import Data.List
@@ -21,6 +24,7 @@ import Paths_webse
 import Documents
 import System.Directory
 import TextUtils.Processing
+import Data.Text(pack)
 
 data Database = Database FilePath SQLite.Connection
 
@@ -126,3 +130,18 @@ buildAlphaIndex (Database _ conn) =
     entryFromChar :: Char -> AlphaIndexEntry
     entryFromChar '~' = Symbols
     entryFromChar c = Character c
+
+
+data Range = Range Int Int
+
+
+queryDocuments :: Database -> AlphaIndexEntry -> Range -> IO [Document]
+queryDocuments (Database _ conn) entry (Range skip count) =
+  SQLite.queryNamed conn query ([":skip" := skip, ":count" := count] ++ params)
+  where
+    query = SQLite.Query $ pack ("SELECT rowid, url, name, excerpt, fileSize, wordsCount FROM documents " ++ whereClause ++ " ORDER BY name LIMIT :skip, :count")
+
+    (whereClause, params) = case entry of
+      All -> ("", [])
+      Character c -> ("WHERE upper(substr(name, 1, 1)) = :char", [":char" := [c]])
+      Symbols -> ("WHERE upper(substr(name, 1, 1)) NOT BETWEEN 'A' AND 'Z'", [])
