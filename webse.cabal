@@ -43,7 +43,8 @@ library webse-lib
                        Database.DocumentsDB,
                        TextUtils.Processing,
                        Pages.DocumentPage,
-                       Pages.DocumentsIndex
+                       Pages.DocumentsIndex,
+                       Pages.UrlUtils
   other-modules:       Paths_webse
   hs-source-dirs:      src
 
@@ -74,5 +75,6 @@ test-suite spec
                        Search.PorterSpec,
                        DocumentsSpec,
                        Database.DocumentsDBSpec,
-                       TextUtils.ProcessingSpec
+                       TextUtils.ProcessingSpec,
+                       Pages.UrlUtilsSpec
   build-tool-depends:  hspec-discover:hspec-discover == 2.*
