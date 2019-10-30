@@ -6,8 +6,15 @@ import Data.Char(toLower, toUpper)
 import Data.List(isPrefixOf)
 import Happstack.Server (FromReqURI(fromReqURI), path, ok, ServerPart, Response,
                          toResponse, nullDir, tempRedirect, dir, askRq, rqUri,
-                         rqQuery)
+                         rqQuery, require)
 import Pages.UrlUtils(popUrlComponent)
+import Presentation.Layout(appLayout)
+import Presentation.AlphabeticalIndex(alphabeticalIndex)
+import Presentation.DocViews(documentPreview)
+import Database.DocumentsDB(Database, AlphaIndexEntry(..), buildAlphaIndex,
+                            queryDocuments, paginationRange)
+import Documents(Document)
+import qualified Text.Blaze.Html5 as H
 
 
 data PageNumber = PageNumber { fromPageNumber :: Int } deriving (Show)
@@ -34,10 +41,10 @@ optPageNum handler = msum [
   nullDir >> (handler $ PageNumber 1)]
 
 
-data QueryType = All | Character Char | Symbol deriving (Show)
+data QueryType = IndexQuery AlphaIndexEntry
 
-instance FromReqURI QueryType where
-  fromReqURI "symbol" = Just Symbol
+instance FromReqURI AlphaIndexEntry where
+  fromReqURI "symbol" = Just Symbols
   fromReqURI part
    | not $ null $ tail part = Nothing
    | char `elem` ['a'..'z'] = Just $ Character $ toUpper char
@@ -45,12 +52,38 @@ instance FromReqURI QueryType where
    where char = toLower $ head part
 
 
-renderDocumentsIndex :: QueryType -> PageNumber -> ServerPart Response
-renderDocumentsIndex queryType pageNum =
-  ok $ toResponse (show queryType ++ "\n" ++ show pageNum)
+makeIndexUrl :: AlphaIndexEntry -> String
+makeIndexUrl All = "/"
+makeIndexUrl (Character c) = ['/', toLower c]
+makeIndexUrl Symbols = "/symbol"
 
 
-documentsIndexHandler :: ServerPart Response
-documentsIndexHandler = msum [
-  optPageNum $ renderDocumentsIndex All,
-  path $ \queryType -> optPageNum $ renderDocumentsIndex queryType]
+renderDocumentsIndex :: QueryType -> ([AlphaIndexEntry], [Document]) -> ServerPart Response
+renderDocumentsIndex queryType (alphaIndex, documents) = do
+  ok $ toResponse $
+    appLayout pageTitle $ do
+      H.h1 (H.toHtml pageTitle)
+      alphabeticalIndex makeIndexUrl alphaIndex indexEntry
+      mapM_ documentPreview documents
+    where
+      (pageTitle, indexEntry) = case queryType of
+        IndexQuery All -> ("All documents", Just All)
+        IndexQuery (Character char) -> ("All documents (letter " ++ [char] ++ ")", Just $ Character char)
+        IndexQuery Symbols -> ("All documents (non latin character)", Just Symbols)
+
+
+documentsIndexHandler :: Database -> ServerPart Response
+documentsIndexHandler db =
+  msum [
+    optPageNum $ docsIndex $ IndexQuery All,
+    path $ \index -> optPageNum $ docsIndex $ IndexQuery index]
+  where
+    docsIndex :: QueryType -> PageNumber -> ServerPart Response
+    docsIndex queryType pageNum = require (loadValues queryType pageNum) $ renderDocumentsIndex queryType
+
+    loadValues :: QueryType -> PageNumber -> IO (Maybe ([AlphaIndexEntry], [Document]))
+    loadValues queryType (PageNumber pageNum) = do
+      alphaIndex <- buildAlphaIndex db
+      documents <- case queryType of
+        IndexQuery index -> queryDocuments db index $ paginationRange 20 pageNum
+      return $ Just (All:alphaIndex, documents)

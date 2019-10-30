@@ -28,6 +28,6 @@ main = do
 
   simpleHTTP nullConf $ msum [
     removeTrailingSlash,
-    documentsIndexHandler,
+    documentsIndexHandler db,
     documentPageHandler db,
     dir "static" $ serveDirectory DisableBrowsing [] static_dir]
