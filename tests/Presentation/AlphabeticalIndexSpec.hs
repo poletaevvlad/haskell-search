@@ -7,12 +7,12 @@ import Database.DocumentsDB (AlphaIndexEntry(All, Character, Symbols))
 spec :: Spec
 spec = do
   describe "alphabeticalIndex" $ do
-    -- it "should generate nothing if no entries are presented" $ do
-    --   renderHtml (alphabeticalIndex show [] Nothing) `shouldBe` ""
-    -- it "should generate nothing if only one entry is presented" $ do
-    --   renderHtml (alphabeticalIndex show [All] Nothing) `shouldBe` ""
-    -- it "should generate nothing if only two entries are presented" $ do
-    --   renderHtml (alphabeticalIndex show [All, Character 'A'] Nothing) `shouldBe` ""
+    it "should generate nothing if no entries are presented" $ do
+      renderHtml (alphabeticalIndex show [] Nothing) `shouldBe` ""
+    it "should generate nothing if only one entry is presented" $ do
+      renderHtml (alphabeticalIndex show [All] Nothing) `shouldBe` ""
+    it "should generate nothing if only two entries are presented" $ do
+      renderHtml (alphabeticalIndex show [All, Character 'A'] Nothing) `shouldBe` ""
 
     it "should generate index if many entries are presented" $ do
       let entries = [All, Character 'A', Character 'B', Symbols]

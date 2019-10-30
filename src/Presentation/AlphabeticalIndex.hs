@@ -13,11 +13,13 @@ import Database.DocumentsDB (AlphaIndexEntry(All, Character, Symbols))
 
 
 alphabeticalIndex :: (AlphaIndexEntry -> String) -> [AlphaIndexEntry] -> Maybe AlphaIndexEntry -> H.Html
-alphabeticalIndex urlFactory entries currentEntry =
-  H.div ! A.class_ "index" $ do
-    H.div "Index:" ! A.class_ "label"
-    H.div ! A.class_ "index-items" $ do
-      forM_ entries renderEntry
+alphabeticalIndex urlFactory entries currentEntry
+  | length entries < 3 = mempty
+  | otherwise =
+    H.div ! A.class_ "index" $ do
+      H.div "Index:" ! A.class_ "label"
+      H.div ! A.class_ "index-items" $ do
+        forM_ entries renderEntry
 
   where
     stringFor All = "All"
