@@ -97,7 +97,7 @@ storeDocument (Database path conn) title contents = do
   let doc = Document { getDocId = 0
                      , getDocUrl = url
                      , getDocName = title
-                     , getDocExcerpt = getExcerpt 30 $ head contents
+                     , getDocExcerpt = getExcerpt 50 fileContents
                      , getDocFileSize = foldl (\s x -> s + 1 + length x) 0 contents
                      , getDocWordsCount = length $ splitWords fileContents }
 
