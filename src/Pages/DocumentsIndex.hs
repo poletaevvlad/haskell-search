@@ -13,7 +13,7 @@ import Presentation.AlphabeticalIndex(alphabeticalIndex)
 import Presentation.DocViews(documentPreview)
 import Database.DocumentsDB(Database, AlphaIndexEntry(..), buildAlphaIndex,
                             queryDocuments, paginationRange)
-import Documents(Document)
+import Documents(Document(getDocUrl))
 import qualified Text.Blaze.Html5 as H
 
 
@@ -52,10 +52,18 @@ instance FromReqURI AlphaIndexEntry where
    where char = toLower $ head part
 
 
-makeIndexUrl :: AlphaIndexEntry -> String
-makeIndexUrl All = "/"
-makeIndexUrl (Character c) = ['/', toLower c]
-makeIndexUrl Symbols = "/symbol"
+renderAlphaIndex :: [AlphaIndexEntry] -> Maybe AlphaIndexEntry -> H.Html
+renderAlphaIndex =
+  alphabeticalIndex makeIndexUrl
+  where
+    makeIndexUrl :: AlphaIndexEntry -> String
+    makeIndexUrl All = "/"
+    makeIndexUrl (Character c) = ['/', toLower c]
+    makeIndexUrl Symbols = "/symbol"
+
+
+renderDocumentPreview :: Document -> H.Html
+renderDocumentPreview = documentPreview (\doc -> "/doc/" ++ getDocUrl doc)
 
 
 renderDocumentsIndex :: QueryType -> ([AlphaIndexEntry], [Document]) -> ServerPart Response
@@ -63,8 +71,8 @@ renderDocumentsIndex queryType (alphaIndex, documents) = do
   ok $ toResponse $
     appLayout pageTitle $ do
       H.h1 (H.toHtml pageTitle)
-      alphabeticalIndex makeIndexUrl alphaIndex indexEntry
-      mapM_ documentPreview documents
+      renderAlphaIndex alphaIndex indexEntry
+      mapM_ renderDocumentPreview documents
     where
       (pageTitle, indexEntry) = case queryType of
         IndexQuery All -> ("All documents", Just All)

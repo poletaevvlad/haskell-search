@@ -10,10 +10,10 @@ import Presentation.Layout(appLayout)
 import Documents
 
 
-documentPreview :: Document -> H.Html
-documentPreview doc = H.div ! A.class_ "doc" $ do
+documentPreview :: (Document -> String) -> Document -> H.Html
+documentPreview urlFormatter doc = H.div ! A.class_ "doc" $ do
   H.div (H.toHtml meta) ! A.class_ "doc-meta"
-  H.a (H.toHtml $ getDocName doc) ! A.class_ "doc-title" ! A.href (toValue $ getDocUrl doc)
+  H.a (H.toHtml $ getDocName doc) ! A.class_ "doc-title" ! A.href (toValue $ urlFormatter doc)
   H.div (H.toHtml $ getDocExcerpt doc) ! A.class_ "doc-description"
   where
     meta = (show wordsNum) ++ wordsSuffix ++ fileSizeStr

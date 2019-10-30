@@ -21,11 +21,11 @@ spec :: Spec
 spec = do
   describe "documentPreview" $ do
     it "must render html for a document" $ do
-      renderHtml (documentPreview doc)  `shouldBe` "<div class=\"doc\"><div class=\"doc-meta\">24 words, 500 bytes</div><a class=\"doc-title\" href=\"/doc/document\">Document&#39;s name</a><div class=\"doc-description\">Document&#39;s excerpt</div></div>"
+      renderHtml (documentPreview getDocUrl doc)  `shouldBe` "<div class=\"doc\"><div class=\"doc-meta\">24 words, 500 bytes</div><a class=\"doc-title\" href=\"/doc/document\">Document&#39;s name</a><div class=\"doc-description\">Document&#39;s excerpt</div></div>"
 
     it "must use singular 'word' when there is only one word in the document" $ do
       let doc2 = doc{getDocWordsCount = 1}
-      renderHtml (documentPreview doc2) `shouldBe` "<div class=\"doc\"><div class=\"doc-meta\">1 word, 500 bytes</div><a class=\"doc-title\" href=\"/doc/document\">Document&#39;s name</a><div class=\"doc-description\">Document&#39;s excerpt</div></div>"
+      renderHtml (documentPreview getDocUrl doc2) `shouldBe` "<div class=\"doc\"><div class=\"doc-meta\">1 word, 500 bytes</div><a class=\"doc-title\" href=\"/doc/document\">Document&#39;s name</a><div class=\"doc-description\">Document&#39;s excerpt</div></div>"
 
   describe "fullDocumentView" $ do
     it "should generate html and escape special characters" $ do
