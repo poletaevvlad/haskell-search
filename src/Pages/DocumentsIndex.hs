@@ -5,7 +5,9 @@ import Control.Monad
 import Data.Char(toLower, toUpper)
 import Data.List(isPrefixOf)
 import Happstack.Server (FromReqURI(fromReqURI), path, ok, ServerPart, Response,
-                         toResponse, nullDir, tempRedirect, dir)
+                         toResponse, nullDir, tempRedirect, dir, askRq, rqUri,
+                         rqQuery)
+import Pages.UrlUtils(popUrlComponent)
 
 
 data PageNumber = PageNumber { fromPageNumber :: Int } deriving (Show)
@@ -25,7 +27,9 @@ instance FromReqURI PageNumber where
 optPageNum :: (PageNumber -> ServerPart Response) -> ServerPart Response
 optPageNum handler = msum [
   dir "page-1" $ do
-    tempRedirect "." $ toResponse "",
+    req <- askRq
+    let newUrl = popUrlComponent $ rqUri req ++ (rqQuery req)
+    tempRedirect newUrl $ toResponse "",
   path handler,
   nullDir >> (handler $ PageNumber 1)]
 
