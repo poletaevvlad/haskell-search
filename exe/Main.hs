@@ -1,18 +1,23 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Main where
 
 import Control.Monad
 import Paths_webse
-import Happstack.Server (
-    nullConf,
-    simpleHTTP,
-    serveDirectory,
-    dir,
-    Browsing(DisableBrowsing))
-
-import Pages.DocumentPage
+import Happstack.Server (nullConf, simpleHTTP, serveDirectory, dir, askRq,
+                         Browsing(DisableBrowsing), trailingSlash, toResponse,
+                         rqUri, rqQuery, ServerPart, Response, tempRedirect,
+                         guardRq)
+import Pages.DocumentPage(documentPageHandler)
+import Pages.DocumentsIndex(documentsIndexHandler)
 import Database.DocumentsDB(loadDatabase)
+
+
+removeTrailingSlash :: ServerPart Response
+removeTrailingSlash =
+  trailingSlash >> askRq >>= \req ->
+    let url = (init $ rqUri req) ++ (rqQuery req)
+    in do
+      guardRq (\_ -> (rqUri req) /= "/")
+      tempRedirect url $ toResponse ""
 
 
 main :: IO ()
@@ -22,5 +27,7 @@ main = do
   db <- loadDatabase "/data/text-db"
 
   simpleHTTP nullConf $ msum [
+    removeTrailingSlash,
+    documentsIndexHandler,
     documentPageHandler db,
     dir "static" $ serveDirectory DisableBrowsing [] static_dir]

@@ -42,7 +42,8 @@ library webse-lib
                        Documents,
                        Database.DocumentsDB,
                        TextUtils.Processing,
-                       Pages.DocumentPage
+                       Pages.DocumentPage,
+                       Pages.DocumentsIndex
   other-modules:       Paths_webse
   hs-source-dirs:      src
 
