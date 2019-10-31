@@ -92,6 +92,6 @@ documentsIndexHandler db =
     loadValues :: QueryType -> PageNumber -> IO (Maybe ([AlphaIndexEntry], [Document]))
     loadValues queryType (PageNumber pageNum) = do
       alphaIndex <- buildAlphaIndex db
-      documents <- case queryType of
+      (documents, _) <- case queryType of
         IndexQuery index -> queryDocuments db index $ paginationRange 20 pageNum
       return $ Just (All:alphaIndex, documents)

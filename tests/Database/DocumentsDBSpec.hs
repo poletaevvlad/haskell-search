@@ -105,7 +105,7 @@ spec = do
 
         getDocName doc `shouldBe` "Document title"
         getDocUrl doc `shouldBe` "document-title"
-        getDocExcerpt doc `shouldBe` "first line"
+        getDocExcerpt doc `shouldBe` "first line\nsecond line\nthird line"
         getDocWordsCount doc `shouldBe` 6
         getDocFileSize doc `shouldBe` 34
 
@@ -165,18 +165,21 @@ spec = do
 
     it "should return all documents" $ do
       (db, _) <- prepareDB docs
-      res <- queryDocuments db All (Range 0 3)
+      (res, count) <- queryDocuments db All (Range 0 3)
       map getDocName res `shouldBe` ["-- document --", "A doc", "B doc 1"]
+      count `shouldBe` 6
 
     it "should return documents with names starting with a specific character" $ do
       (db, _) <- prepareDB docs
-      res <- queryDocuments db (Character 'B') (Range 1 2)
+      (res, count) <- queryDocuments db (Character 'B') (Range 1 2)
       map getDocName res `shouldBe` ["B doc 2", "B doc 3"]
+      count `shouldBe` 3
 
     it "should return documents with names starting with symbols" $ do
       (db, _) <- prepareDB docs
-      res <- queryDocuments db (Symbols) (Range 0 5)
+      (res, count) <- queryDocuments db (Symbols) (Range 0 5)
       map getDocName res `shouldBe` ["-- document --"]
+      count `shouldBe` 1
 
   describe "paginationRange" $ do
     it "should generate range for the first page" $ do

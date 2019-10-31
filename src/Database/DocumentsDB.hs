@@ -141,12 +141,15 @@ paginationRange pageSize pageNumber =
   Range ((pageNumber - 1) * pageSize) pageSize
 
 
-queryDocuments :: Database -> AlphaIndexEntry -> Range -> IO [Document]
+queryDocuments :: Database -> AlphaIndexEntry -> Range -> IO ([Document], Int)
 queryDocuments (Database _ conn) entry (Range skip count) =
-  SQLite.queryNamed conn query ([":skip" := skip, ":count" := count] ++ params)
+  do
+    docs <- SQLite.queryNamed conn query ([":skip" := skip, ":count" := count] ++ params)
+    docsCount <- SQLite.queryNamed conn countQuery params
+    return (docs, SQLite.fromOnly $ head docsCount)
   where
     query = SQLite.Query $ pack ("SELECT rowid, url, name, excerpt, fileSize, wordsCount FROM documents " ++ whereClause ++ " ORDER BY name LIMIT :skip, :count")
-
+    countQuery = SQLite.Query $ pack ("SELECT COUNT(rowid) FROM documents " ++ whereClause)
     (whereClause, params) = case entry of
       All -> ("", [])
       Character c -> ("WHERE upper(substr(name, 1, 1)) = :char", [":char" := [c]])
