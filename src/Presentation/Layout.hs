@@ -10,7 +10,7 @@ import qualified Text.Blaze.Html5.Attributes as A
 
 
 headerLayout :: H.Html
-headerLayout = 
+headerLayout =
     H.div ! A.class_ "header" $ do
         H.a "" ! A.href "/" ! A.class_ "logo"
         H.div ! A.class_ "search-box" $ do
@@ -20,7 +20,7 @@ headerLayout =
 
 
 appLayout :: String -> H.Html -> H.Html
-appLayout title content = 
+appLayout title content =
     H.docTypeHtml $ do
         H.head $ do
             H.title (H.toHtml title)
@@ -33,14 +33,14 @@ appLayout title content =
 
 
 paginator :: (Int -> String) -> Int -> Int -> H.Html
-paginator urlFactory page pagesCount 
+paginator urlFactory page pagesCount
   | pagesCount <= 1 = mempty
-  | otherwise = let 
-      pageIndicator = string (show (page + 1) ++ "/" ++ show pagesCount)
-      
+  | otherwise = let
+      pageIndicator = string (show page ++ "/" ++ show pagesCount)
+
       paginatorButton :: String -> Int -> H.Html
       paginatorButton label pageIndex
-        | pageIndex < 0 || pageIndex >= pagesCount = mempty
+        | pageIndex < 1 || pageIndex > pagesCount = mempty
         | otherwise = H.a (string label) ! A.href (toValue $ urlFactory pageIndex)
 
     in H.div ! A.class_ "paginator" $ do
