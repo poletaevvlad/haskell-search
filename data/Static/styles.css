@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css?family=Inconsolata&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,400i,700,700i&display=swap');
 
 body{
     background-color: #EBEAE6;
     font-size: 14px;
-    font-family: "Inconsolata", monospace;
+    font-family: "Ubuntu Mono", monospace;
     background-image: url("Images/Background.svg");
     margin: 0;
     padding: 0;
@@ -84,6 +84,12 @@ a::after{
     text-align: center;
 }
 
+p{
+    margin: 0;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
 h1{
     font-size: 14px;
     margin: 0;
@@ -135,7 +141,7 @@ h1::after{
     width: 100%;
     font-size: 14px;
     position: relative;
-    font-family: Inconsolata, monospace;
+    font-family: "Ubuntu Mono", monospace;
     background-color: #EBEAE6;
 }
 

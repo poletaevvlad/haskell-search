@@ -23,7 +23,7 @@ removeTrailingSlash =
 main :: IO ()
 main = do
   putStrLn "Launchig server"
-  static_dir <- getDataFileName ""
+  static_dir <- getDataFileName "Static"
   db <- loadDatabase "/data/text-db"
 
   simpleHTTP nullConf $ msum [
