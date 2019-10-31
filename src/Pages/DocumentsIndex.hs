@@ -7,8 +7,8 @@ import Data.List(isPrefixOf)
 import Happstack.Server (FromReqURI(fromReqURI), path, ok, ServerPart, Response,
                          toResponse, nullDir, tempRedirect, dir, askRq, rqUri,
                          rqQuery, require)
-import Pages.UrlUtils(popUrlComponent)
-import Presentation.Layout(appLayout)
+import Pages.UrlUtils(popUrlComponent, setPageNum)
+import Presentation.Layout(appLayout, paginator)
 import Presentation.AlphabeticalIndex(alphabeticalIndex)
 import Presentation.DocViews(documentPreview)
 import Database.DocumentsDB(Database, AlphaIndexEntry(..), buildAlphaIndex,
@@ -66,13 +66,15 @@ renderDocumentPreview :: Document -> H.Html
 renderDocumentPreview = documentPreview (\doc -> "/doc/" ++ getDocUrl doc)
 
 
-renderDocumentsIndex :: QueryType -> ([AlphaIndexEntry], [Document]) -> ServerPart Response
-renderDocumentsIndex queryType (alphaIndex, documents) = do
+renderDocumentsIndex :: QueryType -> PageNumber -> ([AlphaIndexEntry], [Document], Int) -> ServerPart Response
+renderDocumentsIndex queryType pageNum (alphaIndex, documents, totalPages) = do
+  req <- askRq
   ok $ toResponse $
     appLayout pageTitle $ do
       H.h1 (H.toHtml pageTitle)
       renderAlphaIndex alphaIndex indexEntry
       mapM_ renderDocumentPreview documents
+      paginator (\num -> setPageNum (rqUri req) num ++ rqQuery req) (fromPageNumber pageNum) totalPages
     where
       (pageTitle, indexEntry) = case queryType of
         IndexQuery All -> ("All documents", Just All)
@@ -87,11 +89,13 @@ documentsIndexHandler db =
     path $ \index -> optPageNum $ docsIndex $ IndexQuery index]
   where
     docsIndex :: QueryType -> PageNumber -> ServerPart Response
-    docsIndex queryType pageNum = require (loadValues queryType pageNum) $ renderDocumentsIndex queryType
+    docsIndex queryType pageNum =
+      require (loadValues queryType pageNum) $ renderDocumentsIndex queryType pageNum
 
-    loadValues :: QueryType -> PageNumber -> IO (Maybe ([AlphaIndexEntry], [Document]))
+    loadValues :: QueryType -> PageNumber -> IO (Maybe ([AlphaIndexEntry], [Document], Int))
     loadValues queryType (PageNumber pageNum) = do
       alphaIndex <- buildAlphaIndex db
-      (documents, _) <- case queryType of
+      (documents, docsCount) <- case queryType of
         IndexQuery index -> queryDocuments db index $ paginationRange 20 pageNum
-      return $ Just (All:alphaIndex, documents)
+      let pagesNum = ceiling $ fromIntegral docsCount / (20 :: Double)
+      return $ Just (All:alphaIndex, documents, pagesNum)
