@@ -45,6 +45,7 @@ library webse-lib
                        Documents,
                        Database.DocumentsDB,
                        TextUtils.Processing,
+                       TextUtils.StateUtils,
                        Pages.DocumentPage,
                        Pages.DocumentsIndex,
                        Pages.UrlUtils,
@@ -81,6 +82,7 @@ test-suite spec
                        DocumentsSpec,
                        Database.DocumentsDBSpec,
                        TextUtils.ProcessingSpec,
+                       TextUtils.StateUtilsSpec,
                        Pages.UrlUtilsSpec,
                        Search.TermIndexSpec
   build-tool-depends:  hspec-discover:hspec-discover == 2.*
