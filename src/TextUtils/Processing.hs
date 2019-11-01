@@ -24,12 +24,11 @@ splitWords :: String -> [String]
 splitWords text = filter (not . null) $ reverse $ helper [""] text
   where
     isWordSeparator :: Char -> Bool
-    isWordSeparator char = isSeparator char || isPunctuation char || isControl char
+    isWordSeparator char = char /= '\'' && (isSeparator char || isPunctuation char || isControl char)
 
     helper :: [String] -> String -> [String]
     helper [] _ = error "illegal state"
     helper (curr:pr) [] = reverse curr:pr
     helper (curr:pr) (c:cs)
-      | c == '\'' = helper (curr:pr) cs
       | isWordSeparator c = helper ("":reverse curr:pr) cs
       | otherwise = helper ((c:curr):pr) cs

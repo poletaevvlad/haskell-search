@@ -19,7 +19,7 @@ spec = do
     it "should remove spaces and punctuation"  $ do
       splitWords "hello, world" `shouldBe` ["hello", "world"]
     it "should preserve apostrophy" $ do
-      splitWords "shouldn't don't" `shouldBe` ["shouldnt", "dont"]
+      splitWords "shouldn't don't" `shouldBe` ["shouldn't", "don't"]
     it "should ignore trailing and leading spaces and punctuation marks" $ do
       splitWords "  hello --" `shouldBe` ["hello"]
     it "should correctly split text with newlines" $ do
