@@ -5,3 +5,4 @@ packages:
 
 extra-deps:
  - happstack-server-7.5.3@sha256:ae453a5d7d702a5bd3ef606b8c1c30854d7902352dfd0306ac2daf06832402cb,6407
+ - data-stringmap-1.0.1.1@sha256:93261201485505eb8c1a4e5c76f7c16fb1bb6095d410af0e1ea9252629a27b70,3903

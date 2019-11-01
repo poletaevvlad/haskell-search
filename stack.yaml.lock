@@ -11,6 +11,13 @@ packages:
       sha256: a72d9418a462c186ef40ebac9185fa417129ed7efae8c9af25f8212ab5ca0913
   original:
     hackage: happstack-server-7.5.3@sha256:ae453a5d7d702a5bd3ef606b8c1c30854d7902352dfd0306ac2daf06832402cb,6407
+- completed:
+    hackage: data-stringmap-1.0.1.1@sha256:93261201485505eb8c1a4e5c76f7c16fb1bb6095d410af0e1ea9252629a27b70,3903
+    pantry-tree:
+      size: 1004
+      sha256: 5244803e68d3ab34e2d0c025d3111cf88bfa10c3235f7ec26a982b3a0ec90c65
+  original:
+    hackage: data-stringmap-1.0.1.1@sha256:93261201485505eb8c1a4e5c76f7c16fb1bb6095d410af0e1ea9252629a27b70,3903
 snapshots:
 - completed:
     size: 523700
