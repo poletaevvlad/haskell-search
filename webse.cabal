@@ -37,7 +37,8 @@ library webse-lib
                        directory >= 1.3.0.0,
                        data-stringmap >= 1.0.0.0,
                        containers >= 0.6.0.0,
-                       mtl >= 2.2.0
+                       mtl >= 2.2.0,
+                       binary >= 0.8.0.0
   exposed-modules:     Presentation.Layout,
                        Presentation.DocViews,
                        Presentation.AlphabeticalIndex,
@@ -74,7 +75,8 @@ test-suite spec
                        temporary-rc >= 1.2.0.0,
                        directory >= 1.3.0.0,
                        sqlite-simple >= 0.4.0.0,
-                       mtl >= 2.2.0
+                       mtl >= 2.2.0,
+                       binary >= 0.8.0.0
   other-modules:       Presentation.LayoutSpec,
                        Presentation.DocViewsSpec,
                        Presentation.AlphabeticalIndexSpec,

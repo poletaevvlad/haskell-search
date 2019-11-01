@@ -1,11 +1,18 @@
-module Search.TermIndex(new, add, add', requestId, requestId', getId, lookup) where
+module Search.TermIndex(TermIndex, new, add, add', requestId, requestId', getId, lookup) where
 
 import Prelude hiding (lookup)
 import Control.Monad.State
 import Data.StringMap(StringMap)
+import qualified Data.Binary as B
 import qualified Data.StringMap as SM
 
 data TermIndex = TermIndex Int (StringMap Int)
+
+instance B.Binary TermIndex where
+  put (TermIndex _ strMap) = B.put strMap
+  get = do
+    strMap <- B.get :: B.Get (StringMap Int)
+    return $ TermIndex (foldl max (-1) strMap + 1) strMap
 
 
 new :: TermIndex

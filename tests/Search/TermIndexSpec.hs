@@ -4,6 +4,7 @@ import Prelude hiding (lookup)
 import Test.Hspec
 import Search.TermIndex
 import Control.Monad.State
+import Data.Binary
 
 
 spec :: Spec
@@ -56,3 +57,16 @@ spec = do
         i2 `shouldBe` 1
         i3 `shouldBe` 0
 
+  describe "Binary" $ do
+    it "should serialize and deserialzie empty" $ do
+      let bs = encode new
+      let decoded = decode bs :: TermIndex
+      fst (requestId' "abc" decoded) `shouldBe` 0
+
+    it "should serialize and deserialize index with elements" $ do
+      let index = runState (add "a" 1 >> add "b" 3 >> add "c" 4) new
+      let decoded = decode $ encode index :: TermIndex
+      lookup "a" decoded `shouldBe` Just 1
+      lookup "b" decoded `shouldBe` Just 3
+      lookup "c" decoded `shouldBe` Just 4
+      fst (requestId' "d" decoded) `shouldBe` 5
