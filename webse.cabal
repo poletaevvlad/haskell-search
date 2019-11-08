@@ -38,7 +38,8 @@ library webse-lib
                        data-stringmap >= 1.0.0.0,
                        containers >= 0.6.0.0,
                        mtl >= 2.2.0,
-                       binary >= 0.8.0.0
+                       binary >= 0.8.0.0,
+                       bytestring >= 0.10.0.0
   exposed-modules:     Presentation.Layout,
                        Presentation.DocViews,
                        Presentation.AlphabeticalIndex,
@@ -47,10 +48,12 @@ library webse-lib
                        Database.DocumentsDB,
                        TextUtils.Processing,
                        TextUtils.StateUtils,
+                       TextUtils.FileUtils,
                        Pages.DocumentPage,
                        Pages.DocumentsIndex,
                        Pages.UrlUtils,
-                       Search.TermIndex
+                       Search.TermIndex,
+                       Search.InvertedIndex
   other-modules:       Paths_webse
   hs-source-dirs:      src
 
@@ -76,7 +79,8 @@ test-suite spec
                        directory >= 1.3.0.0,
                        sqlite-simple >= 0.4.0.0,
                        mtl >= 2.2.0,
-                       binary >= 0.8.0.0
+                       binary >= 0.8.0.0,
+                       bytestring >= 0.10.0.0
   other-modules:       Presentation.LayoutSpec,
                        Presentation.DocViewsSpec,
                        Presentation.AlphabeticalIndexSpec,
@@ -85,6 +89,8 @@ test-suite spec
                        Database.DocumentsDBSpec,
                        TextUtils.ProcessingSpec,
                        TextUtils.StateUtilsSpec,
+                       TextUtils.FileUtilsSpec,
                        Pages.UrlUtilsSpec,
-                       Search.TermIndexSpec
+                       Search.TermIndexSpec,
+                       Search.InvertedIndexSpec
   build-tool-depends:  hspec-discover:hspec-discover == 2.*
