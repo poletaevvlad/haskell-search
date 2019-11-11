@@ -49,5 +49,10 @@ spec = do
         res <- performTermSearch 2 idx
         map dieDocId res `shouldBe` [13, 8, 14]
         map diePosOffset res `shouldBe` [5, 11, 15]
-        map diePosCount res `shouldBe` [6, 4, 2]
-        )
+        map diePosCount res `shouldBe` [6, 4, 2])
+
+  describe "getPositions" $ do
+    it "should return indices" $ do
+      withIndex (\idx -> do
+        res <- getPositions (DocIndexEntry 7 1 4) idx
+        res `shouldBe` [2, 3, 4, 5])

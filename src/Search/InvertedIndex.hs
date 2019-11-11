@@ -1,5 +1,5 @@
 module Search.InvertedIndex(InvIndexEntry(..), DocIndexEntry(..), InvertedIndex,
-  loadIndex, performTermSearch, TermSearchResults) where
+  loadIndex, performTermSearch, TermSearchResults, getPositions) where
 
 import qualified Data.Binary as B
 import Data.Word(Word32)
@@ -77,6 +77,14 @@ performTermSearch termId index =
       handle = idxDocsIndexH index
   in case res of
     Just (InvIndexEntry offset count) -> do
-      hSeek handle AbsoluteSeek $ fromIntegral (offset * sizeOfDocIndexEntry)
+      hSeek handle AbsoluteSeek $ fromIntegral $ offset * sizeOfDocIndexEntry
       loadFromFile handle sizeOfDocIndexEntry count
     Nothing -> return []
+
+
+getPositions :: DocIndexEntry -> InvertedIndex -> IO [Int]
+getPositions entry index = do
+  let handle = idxPosIndexH index
+  hSeek handle AbsoluteSeek $ fromIntegral $ (diePosOffset entry) * 4
+  indices <- loadFromFile handle 4 $ diePosCount entry :: IO [Word32]
+  return $ fromIntegral <$> indices
