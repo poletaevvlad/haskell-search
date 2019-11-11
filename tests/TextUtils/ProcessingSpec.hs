@@ -3,6 +3,7 @@ module TextUtils.ProcessingSpec (spec) where
 import Test.Hspec
 import TextUtils.Processing
 
+
 spec :: Spec
 spec = do
   describe "getExcerpt" $ do
@@ -24,3 +25,10 @@ spec = do
       splitWords "  hello --" `shouldBe` ["hello"]
     it "should correctly split text with newlines" $ do
       splitWords "hello\nworld" `shouldBe` ["hello", "world"]
+
+  describe "getPositions" $ do
+    it "should return empty array if the input is empty" $ do
+      getPositions "" `shouldBe` []
+    it "should extract positions from an array" $ do
+      let expected = [('a', [0, 1, 4]), ('b', [2, 7]), ('c', [3, 5, 6])]
+      getPositions "aabcaccb" `shouldBe` expected

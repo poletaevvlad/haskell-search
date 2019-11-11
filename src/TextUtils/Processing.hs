@@ -1,6 +1,8 @@
-module TextUtils.Processing (getExcerpt, splitWords) where
+module TextUtils.Processing (getExcerpt, splitWords, getPositions) where
 
 import Data.Char
+import Data.Map(Map)
+import qualified Data.Map as M
 
 
 getExcerpt :: Int -> String -> String
@@ -32,3 +34,14 @@ splitWords text = filter (not . null) $ reverse $ helper [""] text
     helper (curr:pr) (c:cs)
       | isWordSeparator c = helper ("":reverse curr:pr) cs
       | otherwise = helper ((c:curr):pr) cs
+
+
+getPositions :: (Ord a) => [a] -> [(a, [Int])]
+getPositions string =
+  map (\(c, v) -> (c, reverse v)) $ M.toList $ getPos string 0 M.empty
+  where
+    getPos :: (Ord a) => [a] -> Int -> Map a [Int] -> Map a [Int]
+    getPos [] _ m = m
+    getPos (c: cs) i m = let value = i : M.findWithDefault [] c m
+                       in getPos cs (i + 1) $ M.insert c value m
+
