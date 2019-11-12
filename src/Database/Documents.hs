@@ -1,15 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Documents(
-  Document(Document),
-  getDocId,
-  getDocUrl,
-  getDocName,
-  getDocExcerpt,
-  getDocFileSize,
-  getDocWordsCount,
-  formatFileSize,
-  escapeFileName) where
+module Database.Documents(Document(..), formatFileSize, escapeFileName) where
 
 import Numeric(showFFloat, showInt)
 import Data.Char(toLower, isNumber, isLetter, isSeparator)

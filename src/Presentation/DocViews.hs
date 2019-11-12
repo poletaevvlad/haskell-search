@@ -6,8 +6,7 @@ import Text.Blaze ((!))
 import Text.Blaze(toValue)
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
-import Presentation.Layout(appLayout)
-import Documents
+import Database.Documents
 
 
 documentPreview :: (Document -> String) -> Document -> H.Html

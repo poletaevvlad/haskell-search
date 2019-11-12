@@ -3,7 +3,7 @@ module Pages.DocumentPage(documentPageHandler) where
 import Happstack.Server (FromReqURI(fromReqURI), ServerPart, Response,
                          toResponse, ok, dir, path, require)
 import Data.Char
-import Documents
+import Database.Documents
 import Database.DocumentsDB(Database, getDocumentByUrl, getDocumentContent)
 import Presentation.Layout(appLayout)
 import Presentation.DocViews(fullDocumentView)

@@ -22,7 +22,7 @@ import qualified Data.Text as Text
 import Data.List.Split (endBy)
 import Data.List
 import Paths_webse
-import Documents
+import Database.Documents
 import System.Directory
 import TextUtils.Processing
 import Data.Text(pack)

@@ -13,7 +13,7 @@ import Presentation.AlphabeticalIndex(alphabeticalIndex)
 import Presentation.DocViews(documentPreview)
 import Database.DocumentsDB(Database, AlphaIndexEntry(..), buildAlphaIndex,
                             queryDocuments, paginationRange)
-import Documents(Document(getDocUrl))
+import Database.Documents(Document(getDocUrl))
 import qualified Text.Blaze.Html5 as H
 
 

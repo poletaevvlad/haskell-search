@@ -7,7 +7,7 @@ import Database.DocumentsDB
 import System.IO.Temp (withSystemTempDirectory)
 import System.Directory
 import qualified Database.SQLite.Simple as SQLite
-import Documents
+import Database.Documents
 import Data.Maybe
 
 

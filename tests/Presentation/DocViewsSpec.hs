@@ -4,7 +4,7 @@ module Presentation.DocViewsSpec (spec) where
 
 import Test.Hspec
 import Presentation.DocViews
-import Documents
+import Database.Documents
 import Text.Blaze.Html.Renderer.String
 
 
