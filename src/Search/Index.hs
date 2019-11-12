@@ -24,8 +24,8 @@ loadStopWords = do
     keepLine text = head text /= '#'
 
 
-buildIndex :: FilePath -> TermIndex -> Database -> IO (InvertedIndex, TermIndex)
-buildIndex path termIndex database = do
+buildIndex :: FilePath -> Set String -> TermIndex -> Database -> IO (InvertedIndex, TermIndex)
+buildIndex path stopWords termIndex database = do
   termIndex <- withIndexBuilder path $ do
     documents <- lift $ queryAllTexts database
     addToInvertedIndex termIndex documents
@@ -35,7 +35,10 @@ buildIndex path termIndex database = do
     addToInvertedIndex :: TermIndex -> [(Int, [String])] -> StateT IndexBuilder IO TermIndex
     addToInvertedIndex termIdx []  = return termIdx
     addToInvertedIndex termIdx ((docId, lines):others) = do
-      let words = map porter $ mconcat $ map (splitWords . filterChars) lines
+      let words = map porter $ mconcat $ map strToWords lines
       let (ids, newTermIdx) = runState (accumState $ map requestId words) termIdx
       addDocument docId ids
       addToInvertedIndex newTermIdx others
+
+    strToWords :: String -> [String]
+    strToWords = filter (`Set.notMember` stopWords) . splitWords . filterChars
