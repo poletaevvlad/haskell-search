@@ -14,7 +14,8 @@ module Database.DocumentsDB (
   buildAlphaIndex,
   Range(Range),
   paginationRange,
-  queryDocuments) where
+  queryDocuments,
+  queryAllTexts) where
 
 import qualified Database.SQLite.Simple as SQLite
 import Database.SQLite.Simple (NamedParam((:=)))
@@ -77,10 +78,14 @@ getDocumentByUrl (Database _ conn) url = maybeSingleResult <$> (
                     \FROM documents WHERE url = ? LIMIT 1" (SQLite.Only url) :: IO [Document])
 
 
-getDocumentContent :: Database -> Document -> IO [String]
-getDocumentContent (Database path _) doc = do
-  let filePath = path ++ "/docs/" ++ (show $ getDocId doc)
+getDocumentContentById :: Database -> Int -> IO [String]
+getDocumentContentById (Database path _) docId = do
+  let filePath = path ++ "/docs/" ++ (show docId)
   lines <$> (readFile filePath)
+
+
+getDocumentContent :: Database -> Document -> IO [String]
+getDocumentContent db doc = getDocumentContentById db $ getDocId doc
 
 
 storeDocument :: Database -> String -> [String] -> IO Document
@@ -154,3 +159,13 @@ queryDocuments (Database _ conn) entry (Range skip count) =
       All -> ("", [])
       Character c -> ("WHERE upper(substr(name, 1, 1)) = :char", [":char" := [c]])
       Symbols -> ("WHERE upper(substr(name, 1, 1)) NOT BETWEEN 'A' AND 'Z'", [])
+
+
+queryAllTexts :: Database -> IO [(Int, [String])]
+queryAllTexts db@(Database _ conn) =
+  SQLite.fold_ conn "SELECT rowid FROM documents" [] add
+  where
+    add :: [(Int, [String])] -> SQLite.Only Int -> IO [(Int, [String])]
+    add prev (SQLite.Only docId) =
+      (\text -> (docId, text):prev) <$> getDocumentContentById db docId
+

@@ -186,3 +186,16 @@ spec = do
       paginationRange 20 1 `shouldBe` Range 0 20
     it "should generate range for next pages" $ do
       paginationRange 20 2 `shouldBe` Range 20 20
+
+  describe "queryAllTexts" $ do
+    it "should return contents of every file in the database" $ do
+      (results, d1, d2) <- withSystemTempDirectory  "database" (\path -> do
+        createDirectory (path ++ "/docs/")
+        db <- loadDatabase path
+        doc1 <- storeDocument db "doc_a" ["a1", "a2", "a3"]
+        doc2 <- storeDocument db "doc_b" ["b1", "b2"]
+
+        result <- queryAllTexts db
+        closeDatabase db
+        return (result, getDocId doc1, getDocId doc2))
+      results `shouldBe` [(d2, ["b1", "b2"]), (d1, ["a1", "a2", "a3"])]
