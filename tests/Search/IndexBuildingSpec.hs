@@ -11,10 +11,11 @@ spec = do
   describe "addDocument" $ do
     it "should generate index" $ do
       (d1, d2, p2, p3) <- withSystemTempDirectory "database" (\path -> do
-        index <- withIndexBuilder path $ do
+        withIndexBuilder path $ do
           addDocument 7 [0, 0, 1, 2, 0, 2, 2, 1]
           addDocument 16 [0, 1, 3, 3, 0, 0]
 
+        index <- loadIndex path
         docs1 <- performTermSearch 4 index
 
         docs2 <- performTermSearch 2 index
