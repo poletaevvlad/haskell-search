@@ -1,8 +1,7 @@
-module Search.IndexBuilding(IndexBuilder, createIndexBuilder, addDocument,
-  commit) where
+module Search.IndexBuilding(IndexBuilder, withIndexBuilder, addDocument) where
 
-import Search.InvertedIndex(DocIndexEntry(..))
-import Data.ByteString.Lazy(hPut)
+import Search.InvertedIndex(DocIndexEntry(..), InvIndexEntry(..), InvertedIndex,
+  loadIndex)
 import qualified Data.Binary as B
 import Control.Monad.State.Lazy
 import System.IO
@@ -11,6 +10,7 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import TextUtils.StateUtils (accumStateT)
 import Data.Maybe
+import Data.ByteString.Lazy (hPut)
 
 
 data PosIndexBuilder = PosIndexBuilder Handle Int
@@ -35,12 +35,15 @@ data IndexBuilder =
                , ibDocIndices :: IntMap [DocIndexEntry]}
 
 
-createIndexBuilder :: FilePath -> IO IndexBuilder
-createIndexBuilder path = do
-  posHandle <- openBinaryFile (path ++ "/positions.index") WriteMode
-  return IndexBuilder { ibPosIndexBuilder = PosIndexBuilder posHandle 0
-                      , ibLocation = path
-                      , ibDocIndices = IntMap.empty}
+withIndexBuilder :: FilePath -> StateT IndexBuilder IO () -> IO InvertedIndex
+withIndexBuilder path callbackState =
+  withBinaryFile (path ++ "/positions.index") WriteMode (\posHandle -> do
+    let builder = IndexBuilder { ibPosIndexBuilder = PosIndexBuilder posHandle 0
+                               , ibLocation = path
+                               , ibDocIndices = IntMap.empty}
+    resultBuilder <- execStateT callbackState builder
+    commit resultBuilder
+    )
 
 
 addDocument :: Int -> [Int] -> StateT IndexBuilder IO ()
@@ -61,7 +64,26 @@ addDocument docId termIds =
     prependDocIndex entry maybeList = Just $ entry:(fromMaybe [] maybeList)
 
 
-commit :: IndexBuilder -> IO ()
-commit builder = do
-  let PosIndexBuilder handle _ = ibPosIndexBuilder builder
-  hClose handle
+commit :: IndexBuilder -> IO InvertedIndex
+commit builder =
+  do
+    let PosIndexBuilder handle _ = ibPosIndexBuilder builder
+    hClose handle
+
+    let path = ibLocation builder
+    _ <- withBinaryFile (path ++ "/docs.index") WriteMode (\docsHandle ->
+      withBinaryFile (path ++ "/inv.index") WriteMode (\invHandle ->
+        writeToFiles 0 (IntMap.toAscList $ ibDocIndices builder) 0 invHandle docsHandle))
+    loadIndex $ ibLocation builder
+  where
+    writeToFiles :: Int -> [(Int, [DocIndexEntry])] -> Int -> Handle -> Handle -> IO ()
+    writeToFiles _ [] _ _ _ = return ()
+    writeToFiles currId allEntries@((termId, docEntries):entries) docsOffset invHandle docsHandle
+      | currId < termId = do
+          hPut invHandle $ B.encode $ InvIndexEntry 0 0
+          writeToFiles (currId + 1) allEntries docsOffset invHandle docsHandle
+      | otherwise = do
+          let docsCount = length docEntries
+          hPut invHandle $ B.encode $ InvIndexEntry docsOffset docsCount
+          hPut docsHandle $ mconcat $ map B.encode $ reverse docEntries
+          writeToFiles (currId + 1) entries (docsOffset + docsCount) invHandle docsHandle
