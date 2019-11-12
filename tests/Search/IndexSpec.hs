@@ -9,6 +9,7 @@ import System.IO.Temp(withSystemTempDirectory)
 import System.Directory
 import Database.Documents
 import Data.Maybe
+import qualified Data.Set as Set
 
 spec :: Spec
 spec = do
@@ -28,3 +29,9 @@ spec = do
 
       map (flip TI.lookup terms) words `shouldBe` [Just 2, Just 3, Just 1, Just 0]
       docs `shouldBe` [[d1], [d1], [d2, d1], [d2]]
+  describe "loadStopWords" $ do
+    it "should load words and ignore comments and newlines" $ do
+      words <- loadStopWords
+      Set.size words `shouldBe` 172
+      "# List of stop words" `Set.member` words `shouldBe` False
+

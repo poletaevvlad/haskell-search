@@ -1,4 +1,4 @@
-module Search.Index(buildIndex) where
+module Search.Index(buildIndex, loadStopWords) where
 
 import Control.Monad.State.Lazy
 import Database.DocumentsDB (Database, queryAllTexts)
@@ -9,6 +9,19 @@ import Search.IndexBuilding (IndexBuilder, withIndexBuilder, addDocument)
 import Search.Porter (porter)
 import TextUtils.Processing (filterChars, splitWords)
 import TextUtils.StateUtils(accumState)
+import Data.Set(Set)
+import qualified Data.Set as Set
+import Paths_webse
+
+
+loadStopWords :: IO (Set String)
+loadStopWords = do
+  file <- getDataFileName "StopWords" >>= readFile
+  return $ Set.fromAscList $ filter keepLine $ lines file
+  where
+    keepLine :: String -> Bool
+    keepLine "" = False
+    keepLine text = head text /= '#'
 
 
 buildIndex :: FilePath -> TermIndex -> Database -> IO (InvertedIndex, TermIndex)
