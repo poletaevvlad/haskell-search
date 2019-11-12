@@ -1,6 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TextUtils.FileUtils(loadFromFile) where
+module TextUtils.FileUtils(loadFromFile, parseByteString) where
 
 import System.IO(Handle)
 import qualified Data.Binary as B

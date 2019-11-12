@@ -53,7 +53,8 @@ library webse-lib
                        Pages.DocumentsIndex,
                        Pages.UrlUtils,
                        Search.TermIndex,
-                       Search.InvertedIndex
+                       Search.InvertedIndex,
+                       Search.IndexBuilding
   other-modules:       Paths_webse
   hs-source-dirs:      src
 
@@ -92,5 +93,6 @@ test-suite spec
                        TextUtils.FileUtilsSpec,
                        Pages.UrlUtilsSpec,
                        Search.TermIndexSpec,
-                       Search.InvertedIndexSpec
+                       Search.InvertedIndexSpec,
+                       Search.IndexBuildingSpec
   build-tool-depends:  hspec-discover:hspec-discover == 2.*
