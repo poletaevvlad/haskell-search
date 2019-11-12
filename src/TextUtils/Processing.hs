@@ -1,4 +1,5 @@
-module TextUtils.Processing (getExcerpt, splitWords, getPositions) where
+module TextUtils.Processing (getExcerpt, splitWords, getPositions,
+  filterChars) where
 
 import Data.Char
 import Data.Map(Map)
@@ -44,4 +45,14 @@ getPositions string =
     getPos [] _ m = m
     getPos (c: cs) i m = let value = i : M.findWithDefault [] c m
                        in getPos cs (i + 1) $ M.insert c value m
+
+
+filterChars :: String -> String
+filterChars = concatMap lowerLatin
+  where
+    lowerLatin x
+      | x `elem` ['a'..'z'] = [x]
+      | x `elem` ['A'..'Z'] = [toLower x]
+      | x == '\'' = []
+      | otherwise = [' ']
 

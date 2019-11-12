@@ -32,3 +32,9 @@ spec = do
     it "should extract positions from an array" $ do
       let expected = [('a', [0, 1, 4]), ('b', [2, 7]), ('c', [3, 5, 6])]
       getPositions "aabcaccb" `shouldBe` expected
+
+  describe "filterChars" $ do
+    it "should convert to lowercase and replace punctuations with spaces" $ do
+      filterChars "Hello, World!" `shouldBe` "hello  world "
+    it "should drop apostrophy" $ do
+      filterChars "a'b'c'defg" `shouldBe` "abcdefg"
