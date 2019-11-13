@@ -1,5 +1,5 @@
 module Search.Index(buildIndex, loadStopWords, Index(..), loadIndex,
-  createIndex, closeIndex, processQuery, getRequestDocs) where
+  createIndex, closeIndex, processQuery, getRequestDocs, getRequestDocIds) where
 
 import Control.Monad.State.Lazy
 import Database.DocumentsDB (Database, queryAllTexts)
@@ -96,6 +96,13 @@ processQuery text index =
 
     strToWords :: String -> [String]
     strToWords = map porter . splitWords . filterChars
+
+
+getRequestDocIds :: [Int] -> Index -> IO [Int]
+getRequestDocIds request index = do
+  let requiredCount = round $ (fromIntegral $ length request) * (0.75 :: Double)
+  reqDocs <- IntMap.filter (\x -> length x >= requiredCount) <$> getRequestDocs request index
+  return $ IntMap.keys reqDocs
 
 
 getRequestDocs :: [Int] -> Index -> IO (IntMap [(Int, II.DocIndexEntry)])

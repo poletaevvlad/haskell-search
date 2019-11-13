@@ -102,3 +102,20 @@ spec = do
     it "should return empty result for empty request" $ do
       res <- transformReq <$> withIndex (\index -> getRequestDocs [] index)
       res `shouldBe` IntMap.empty
+
+  describe "getRequestDocIds" $ do
+    it "should return nothing for empty request" $ do
+      res <- withIndex (\index -> getRequestDocIds [] index)
+      res `shouldBe` []
+    it "should not filter out documents with single request entries" $ do
+      res <- withIndex (\index -> getRequestDocIds [0] index)
+      res `shouldBe` [1, 3, 4]
+    it "should act as a union if request contains two elements" $ do
+      res <- withIndex (\index -> getRequestDocIds [0, 2] index)
+      res `shouldBe` [1]
+    it "should not return document containing less then three quaters of the request words (1)" $ do
+      res <- withIndex (\index -> getRequestDocIds [2, 3, 4, 0] index)
+      res `shouldBe` [1, 2]
+    it "should not return document containing less then three quaters of the request words (2)" $ do
+      res <- withIndex (\index -> getRequestDocIds [0, 1, 2] index)
+      res `shouldBe` [1, 3]
