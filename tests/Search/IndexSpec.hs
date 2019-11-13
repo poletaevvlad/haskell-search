@@ -11,6 +11,27 @@ import Database.Documents
 import Data.Maybe
 import qualified Data.Set as Set
 import Control.Monad.State.Lazy (execState)
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IntMap
+
+
+withIndex :: (Index -> IO a) -> IO a
+withIndex callback =
+  withSystemTempDirectory "database" (\path -> do
+    createDirectory (path ++ "/docs/")
+    db <- loadDatabase path
+    _ <- storeDocument db "doc_1" ["wa wb wc wc wc wd"]
+    _ <- storeDocument db "doc_2" ["wb wd wd we"]
+    _ <- storeDocument db "doc_3" ["wa wa wc"]
+    _ <- storeDocument db "doc_3" ["wc"]
+    let index = createIndex Set.empty path TI.new Nothing
+    index <- buildIndex index db
+    callback index)
+
+
+transformReq :: IntMap [(Int, II.DocIndexEntry)] -> IntMap [(Int, Int, Int)]
+transformReq = IntMap.map (map (\(tid, entry) -> (tid, II.dieDocId entry, II.diePosCount entry)))
+
 
 
 spec :: Spec
@@ -71,3 +92,13 @@ spec = do
 
       processQuery "a b c, b, d, a" index `shouldBe` [1, 2, 3, 2, 1]
 
+  describe "getRequestDocs" $ do
+    it "should generate a map" $ do
+      res <- transformReq <$> withIndex (\index -> getRequestDocs [1, 2] index)
+      res `shouldBe` IntMap.fromList [
+        (1, [(1, 1, 1), (2, 1, 1)]),
+        (2, [(2, 2, 1)]),
+        (3, [(1, 3, 2)])]
+    it "should return empty result for empty request" $ do
+      res <- transformReq <$> withIndex (\index -> getRequestDocs [] index)
+      res `shouldBe` IntMap.empty

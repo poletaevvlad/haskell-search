@@ -1,5 +1,5 @@
 module Search.Index(buildIndex, loadStopWords, Index(..), loadIndex,
-  createIndex, closeIndex, processQuery) where
+  createIndex, closeIndex, processQuery, getRequestDocs) where
 
 import Control.Monad.State.Lazy
 import Database.DocumentsDB (Database, queryAllTexts)
@@ -15,7 +15,9 @@ import Data.Set(Set)
 import qualified Data.Set as Set
 import Paths_webse
 import System.Directory (doesFileExist)
-import Data.Maybe (fromJust, isJust)
+import Data.Maybe (fromJust, isJust, isNothing)
+import Data.IntMap(IntMap)
+import qualified Data.IntMap as IntMap
 
 
 data Index =
@@ -94,3 +96,25 @@ processQuery text index =
 
     strToWords :: String -> [String]
     strToWords = map porter . splitWords . filterChars
+
+
+getRequestDocs :: [Int] -> Index -> IO (IntMap [(Int, II.DocIndexEntry)])
+getRequestDocs request index =
+  if isNothing $ indexInvIndex index
+  then return IntMap.empty
+  else do
+    let invIndex = fromJust $ indexInvIndex index
+    docEntries <- mapM (flip II.performTermSearch invIndex) request
+    return $ addAllTerms $ zip request docEntries
+
+  where
+    addTermDocs :: Int -> [II.DocIndexEntry] -> IntMap [(Int, II.DocIndexEntry)] -> IntMap [(Int, II.DocIndexEntry)]
+    addTermDocs _ [] m = m
+    addTermDocs termId (i:rest) m =
+      let m2 = addTermDocs termId rest m
+          list = IntMap.findWithDefault [] (II.dieDocId i) m2
+      in IntMap.insert (II.dieDocId i) ((termId, i):list) m2
+
+    addAllTerms :: [(Int, [II.DocIndexEntry])] -> IntMap [(Int, II.DocIndexEntry)]
+    addAllTerms [] = IntMap.empty
+    addAllTerms ((i, docs):rest) = addTermDocs i docs $ addAllTerms rest
