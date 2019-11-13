@@ -1,10 +1,13 @@
-module Search.TermIndex(TermIndex, new, add, add', requestId, requestId', getId, lookup) where
+module Search.TermIndex(TermIndex, new, add, add', requestId, requestId', getId,
+  lookup, null, loadIndex, saveIndex) where
 
-import Prelude hiding (lookup)
+import Prelude hiding (lookup, null)
 import Control.Monad.State
 import Data.StringMap(StringMap)
 import qualified Data.Binary as B
 import qualified Data.StringMap as SM
+import qualified Data.ByteString.Lazy as BS
+import System.Directory (doesFileExist)
 
 data TermIndex = TermIndex Int (StringMap Int)
 
@@ -48,3 +51,19 @@ getId key = get >>= \(TermIndex _ strMap) -> return $ SM.lookup key strMap
 
 lookup :: String -> TermIndex -> Maybe Int
 lookup key index = evalState (getId key) index
+
+
+null :: TermIndex -> Bool
+null (TermIndex _ map) = SM.null map
+
+
+loadIndex :: FilePath -> IO TermIndex
+loadIndex path = do
+  let termsFile = path ++ "/terms.index"
+  fileExist <- doesFileExist termsFile
+  if fileExist
+     then B.decode <$> BS.readFile termsFile
+     else return new
+
+saveIndex :: FilePath -> TermIndex -> IO ()
+saveIndex path index = BS.writeFile (path ++ "/terms.index") $ B.encode index

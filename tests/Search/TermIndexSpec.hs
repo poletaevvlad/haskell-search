@@ -1,10 +1,11 @@
 module Search.TermIndexSpec(spec) where
 
-import Prelude hiding (lookup)
+import Prelude hiding (lookup, null)
 import Test.Hspec
 import Search.TermIndex
 import Control.Monad.State
 import Data.Binary
+import System.IO.Temp (withSystemTempDirectory)
 
 
 spec :: Spec
@@ -70,3 +71,15 @@ spec = do
       lookup "b" decoded `shouldBe` Just 3
       lookup "c" decoded `shouldBe` Just 4
       fst (requestId' "d" decoded) `shouldBe` 5
+
+  describe "saveIndex & loadIndex" $ do
+    it "should create new index if file does not exist" $ do
+      index <- withSystemTempDirectory "index" loadIndex
+      null index `shouldBe` True
+    it "should return stored index if it has been saved" $ do
+      index <- withSystemTempDirectory "index" (\path -> do
+        let index = execState (add "word" 0 >> add "term" 2) new
+        saveIndex path index
+        loadIndex path)
+      lookup "word" index `shouldBe` Just 0
+      lookup "term" index `shouldBe` Just 2
