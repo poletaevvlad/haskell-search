@@ -1,5 +1,5 @@
 module Search.Index(buildIndex, loadStopWords, Index(..), loadIndex,
-  createIndex, closeIndex) where
+  createIndex, closeIndex, processQuery) where
 
 import Control.Monad.State.Lazy
 import Database.DocumentsDB (Database, queryAllTexts)
@@ -15,6 +15,7 @@ import Data.Set(Set)
 import qualified Data.Set as Set
 import Paths_webse
 import System.Directory (doesFileExist)
+import Data.Maybe (fromJust, isJust)
 
 
 data Index =
@@ -82,3 +83,14 @@ buildIndex index database = do
 
     strToWords :: String -> [String]
     strToWords = filter (`Set.notMember` (indexStopWords index)) . splitWords . filterChars
+
+
+processQuery :: String -> Index -> [Int]
+processQuery text index =
+  map fromJust $ filter isJust $ map toId $ strToWords text
+  where
+    toId :: String -> Maybe Int
+    toId str = TI.lookup str $ indexTermsIndex index
+
+    strToWords :: String -> [String]
+    strToWords = map porter . splitWords . filterChars

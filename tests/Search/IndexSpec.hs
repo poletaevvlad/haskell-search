@@ -10,6 +10,8 @@ import System.Directory
 import Database.Documents
 import Data.Maybe
 import qualified Data.Set as Set
+import Control.Monad.State.Lazy (execState)
+
 
 spec :: Spec
 spec = do
@@ -61,4 +63,11 @@ spec = do
       words <- loadStopWords
       Set.size words `shouldBe` 172
       "# List of stop words" `Set.member` words `shouldBe` False
+
+  describe "processQuery" $ do
+    it "should transform words into their ids" $ do
+      let termsIndex = execState (TI.add "a" 1 >> TI.add "b" 2 >> TI.add "c" 3) TI.new
+      let index = createIndex Set.empty "" termsIndex Nothing
+
+      processQuery "a b c, b, d, a" index `shouldBe` [1, 2, 3, 2, 1]
 
