@@ -1,21 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Database.DocumentsDB (
-  Database,
-  loadDatabase,
-  closeDatabase,
-  _createInMemory,
-  _getRawConnection,
-  getDocumentById,
-  getDocumentByUrl,
-  getDocumentContent,
-  storeDocument,
-  AlphaIndexEntry(All, Character, Symbols),
-  buildAlphaIndex,
-  Range(Range),
-  paginationRange,
-  queryDocuments,
-  queryAllTexts) where
+module Database.DocumentsDB (Database, loadDatabase, closeDatabase,
+  _createInMemory, _getRawConnection, getDocumentById, getDocumentByUrl,
+  getDocumentContent, storeDocument, AlphaIndexEntry(All, Character, Symbols),
+  buildAlphaIndex, Range(Range), paginationRange, queryDocuments, queryAllTexts,
+  getDocumentsByIds) where
 
 import qualified Database.SQLite.Simple as SQLite
 import Database.SQLite.Simple (NamedParam((:=)))
@@ -27,6 +16,8 @@ import Database.Documents
 import System.Directory
 import TextUtils.Processing
 import Data.Text(pack)
+import qualified Data.IntMap as IntMap
+import Data.Maybe (isJust, fromJust)
 
 data Database = Database FilePath SQLite.Connection
 
@@ -76,6 +67,17 @@ getDocumentByUrl :: Database -> String -> IO (Maybe Document)
 getDocumentByUrl (Database _ conn) url = maybeSingleResult <$> (
   SQLite.query conn "SELECT rowid, url, name, excerpt, fileSize, wordsCount \
                     \FROM documents WHERE url = ? LIMIT 1" (SQLite.Only url) :: IO [Document])
+
+
+getDocumentsByIds :: Database -> [Int] -> IO ([Document])
+getDocumentsByIds _ [] = return []
+getDocumentsByIds (Database _ conn) ids = do
+  let idArray = mconcat $ intersperse ", " $ map show ids
+  let request = "SELECT rowid, url, name, excerpt, fileSize, wordsCount \
+                \FROM documents WHERE rowid IN (" ++ idArray ++ ")"
+  docs <- SQLite.query_ conn (SQLite.Query $ pack request) :: IO [Document]
+  let dMap = IntMap.fromList $ map (\doc -> (getDocId doc, doc)) docs
+  return $ map fromJust $ filter isJust $ map (flip IntMap.lookup dMap) ids
 
 
 getDocumentContentById :: Database -> Int -> IO [String]

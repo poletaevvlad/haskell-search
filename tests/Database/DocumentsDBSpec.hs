@@ -154,15 +154,14 @@ spec = do
       entries <- buildAlphaIndex db
       entries `shouldBe` [Character 'A', Symbols]
 
+  let docs = [("A doc", "url-1", "D1.", 2, 45)
+             ,("D doc", "url-2", "D1.", 2, 45)
+             ,("B doc 1", "url-2", "D1.", 2, 45)
+             ,("B doc 2", "url-2", "D1.", 2, 45)
+             ,("B doc 3", "url-2", "D1.", 2, 45)
+             ,("-- document --", "url-3", "D1.", 2, 45)
+             ] :: [DocTuple]
   describe "queryDocuments" $ do
-    let docs = [("A doc", "url-1", "D1.", 2, 45)
-               ,("D doc", "url-2", "D1.", 2, 45)
-               ,("B doc 1", "url-2", "D1.", 2, 45)
-               ,("B doc 2", "url-2", "D1.", 2, 45)
-               ,("B doc 3", "url-2", "D1.", 2, 45)
-               ,("-- document --", "url-3", "D1.", 2, 45)
-               ] :: [DocTuple]
-
     it "should return all documents" $ do
       (db, _) <- prepareDB docs
       (res, count) <- queryDocuments db All (Range 0 3)
@@ -199,3 +198,17 @@ spec = do
         closeDatabase db
         return (result, getDocId doc1, getDocId doc2))
       results `shouldBe` [(d2, ["b1", "b2"]), (d1, ["a1", "a2", "a3"])]
+
+  describe "getDocumentsByIds" $ do
+    it "should return documents in the specified order" $ do
+      (db, _) <- prepareDB docs
+      res <- getDocumentsByIds db [2, 4, 3]
+      map getDocName res `shouldBe` ["D doc", "B doc 2", "B doc 1"]
+    it "should not return non-existent documents" $ do
+      (db, _) <- prepareDB docs
+      res <- getDocumentsByIds db [5, 12, 1]
+      map getDocName res `shouldBe` ["B doc 3", "A doc"]
+    it "should return nothing if no ids are passed" $ do
+      (db, _) <- prepareDB docs
+      res <- getDocumentsByIds db []
+      map getDocName res `shouldBe` []
