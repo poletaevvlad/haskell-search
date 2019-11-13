@@ -3,7 +3,7 @@ module Search.IndexSpec (spec)  where
 import Test.Hspec
 import Search.Index
 import Database.DocumentsDB
-import Search.InvertedIndex
+import qualified Search.InvertedIndex as II
 import qualified Search.TermIndex as TI
 import System.IO.Temp(withSystemTempDirectory)
 import System.Directory
@@ -23,14 +23,39 @@ spec = do
         doc2 <- storeDocument db "doc_b" ["welcome everyone anotherword"]
 
         let stopWords = Set.fromList ["stopword", "anotherword"]
-        (invIdx, termIdx) <- buildIndex path stopWords TI.new db
+        let index = createIndex stopWords path TI.new Nothing
+        index <- buildIndex index db
+
         closeDatabase db
-        docs <- mapM (\str -> performTermSearch (fromJust $ TI.lookup str termIdx) invIdx) words
-        return (termIdx, map (\dl -> map dieDocId dl) docs, getDocId doc1, getDocId doc2))
+        let invIndex = fromJust $ indexInvIndex index
+        docs <- mapM (\str -> II.performTermSearch (fromJust $ TI.lookup str (indexTermsIndex index)) invIndex) words
+        return ((indexTermsIndex index), map (\dl -> map II.dieDocId dl) docs, getDocId doc1, getDocId doc2))
 
       map (flip TI.lookup terms) words `shouldBe` [Just 2, Just 3, Just 1, Just 0]
       map (flip TI.lookup terms) ["stopword", "anotherword"] `shouldBe` [Nothing, Nothing]
       docs `shouldBe` [[d1], [d1], [d2, d1], [d2]]
+
+  describe "loadIndex" $ do
+    it "should return empty index if no files are present" $ do
+      index <- withSystemTempDirectory "database" loadIndex
+      (Set.size $ indexStopWords index) `shouldBe` 172
+      (TI.null $ indexTermsIndex index) `shouldBe` True
+      (isNothing $ indexInvIndex index) `shouldBe` True
+
+    it "should reopen built index" $ do
+      (docCorrect, termIndex) <- withSystemTempDirectory "database" (\path -> do
+        createDirectory (path ++ "/docs/")
+        db <- loadDatabase path
+        doc1 <- storeDocument db "doc_a" ["hello, world", "hello everyone"]
+        index <- loadIndex path >>= flip buildIndex db
+        closeDatabase db >> closeIndex index
+
+        index2 <- loadIndex path
+        docs <- II.performTermSearch 0 $ fromJust $ indexInvIndex index2
+        return ((II.dieDocId $ head docs) == getDocId doc1, indexTermsIndex index2))
+      docCorrect `shouldBe` True
+      TI.lookup "hello" termIndex `shouldBe` Just 0
+
   describe "loadStopWords" $ do
     it "should load words and ignore comments and newlines" $ do
       words <- loadStopWords

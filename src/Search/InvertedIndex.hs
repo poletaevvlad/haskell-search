@@ -1,5 +1,6 @@
 module Search.InvertedIndex(InvIndexEntry(..), DocIndexEntry(..), InvertedIndex,
-  loadIndex, performTermSearch, TermSearchResults, getPositions) where
+  loadIndex, performTermSearch, TermSearchResults, getPositions,
+  closeIndex) where
 
 import qualified Data.Binary as B
 import Data.Word(Word32)
@@ -51,6 +52,12 @@ data InvertedIndex =
                 , idxInvIndex :: IntMap InvIndexEntry
                 , idxDocsIndexH :: Handle
                 , idxPosIndexH :: Handle }
+
+
+closeIndex :: InvertedIndex -> IO ()
+closeIndex index = do
+  hClose $ idxDocsIndexH index
+  hClose $ idxPosIndexH index
 
 
 loadIndex :: FilePath -> IO InvertedIndex
