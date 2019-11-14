@@ -14,7 +14,10 @@ import Presentation.DocViews(documentPreview)
 import Database.DocumentsDB(Database, AlphaIndexEntry(..), buildAlphaIndex,
   queryDocuments, paginationRange, Range(Range), getDocumentsByIds)
 import Database.Documents(Document(getDocUrl))
+import Text.Blaze ((!))
+import qualified Text.Blaze as Blaze
 import qualified Text.Blaze.Html5 as H
+import qualified Text.Blaze.Html5.Attributes as A
 import Search.Index(Index, getRequestDocIds, processQuery)
 import Data.IORef
 import Data.Maybe(isNothing, fromJust)
@@ -77,7 +80,9 @@ renderDocumentsIndex queryType pageNum (alphaIndex, documents, totalPages) = do
     appLayout pageTitle searchQuery $ do
       H.h1 (H.toHtml pageTitle)
       renderAlphaIndex alphaIndex indexEntry
-      mapM_ renderDocumentPreview documents
+      if null documents
+        then H.div ! A.class_ (Blaze.toValue "no-results") $ H.toHtml "Nothing is found"
+        else mapM_ renderDocumentPreview documents
       paginator (\num -> setPageNum (rqUri req) num ++ rqQuery req) (fromPageNumber pageNum) totalPages
     where
       (pageTitle, indexEntry) = case queryType of
