@@ -40,7 +40,9 @@ library webse-lib
                        containers >= 0.6.0.0,
                        mtl >= 2.2.0,
                        binary >= 0.8.0.0,
-                       bytestring >= 0.10.0.0
+                       bytestring >= 0.10.0.0,
+                       cipher-aes >= 0.2.11,
+                       time >= 1.9.0
   exposed-modules:     Presentation.Layout,
                        Presentation.DocViews,
                        Presentation.AlphabeticalIndex,
@@ -85,7 +87,9 @@ test-suite spec
                        mtl >= 2.2.0,
                        binary >= 0.8.0.0,
                        bytestring >= 0.10.0.0,
-                       containers >= 0.6.0.0
+                       containers >= 0.6.0.0,
+                       cipher-aes >= 0.2.11,
+                       time >= 1.9.0
   other-modules:       Presentation.LayoutSpec,
                        Presentation.DocViewsSpec,
                        Presentation.AlphabeticalIndexSpec,
