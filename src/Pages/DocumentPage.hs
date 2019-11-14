@@ -23,7 +23,7 @@ instance FromReqURI DocumentUrl where
 
 renderDocumentPage :: (Document, [String]) -> ServerPart Response
 renderDocumentPage (doc, content) =
-  ok $ toResponse $ appLayout (getDocName doc) $ do
+  ok $ toResponse $ appLayout (getDocName doc) "" $ do
     fullDocumentView doc content
 
 

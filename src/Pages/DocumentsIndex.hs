@@ -71,7 +71,7 @@ renderDocumentsIndex :: QueryType -> PageNumber -> ([AlphaIndexEntry], [Document
 renderDocumentsIndex queryType pageNum (alphaIndex, documents, totalPages) = do
   req <- askRq
   ok $ toResponse $
-    appLayout pageTitle $ do
+    appLayout pageTitle searchQuery $ do
       H.h1 (H.toHtml pageTitle)
       renderAlphaIndex alphaIndex indexEntry
       mapM_ renderDocumentPreview documents
@@ -82,6 +82,9 @@ renderDocumentsIndex queryType pageNum (alphaIndex, documents, totalPages) = do
         IndexQuery (Character char) -> ("All documents (letter " ++ [char] ++ ")", Just $ Character char)
         IndexQuery Symbols -> ("All documents (non latin character)", Just Symbols)
         SearchQuery _ -> ("Search results", Nothing)
+      searchQuery = case queryType of
+        (SearchQuery query) -> query
+        _ -> ""
 
 
 documentsIndexHandler :: Database -> ServerPart Response
