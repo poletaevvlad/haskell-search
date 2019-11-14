@@ -9,6 +9,8 @@ import Happstack.Server (nullConf, simpleHTTP, serveDirectory, dir, askRq,
 import Pages.DocumentPage(documentPageHandler)
 import Pages.DocumentsIndex(documentsIndexHandler)
 import Database.DocumentsDB(loadDatabase)
+import Search.Index(loadIndex, buildIndex)
+import Data.IORef
 
 
 removeTrailingSlash :: ServerPart Response
@@ -25,9 +27,11 @@ main = do
   putStrLn "Launchig server"
   static_dir <- getDataFileName "Static"
   db <- loadDatabase "/data/text-db"
+  index <- loadIndex "/data/text-db"
+  indexRef <- newIORef $ Just index
 
   simpleHTTP nullConf $ msum [
     removeTrailingSlash,
-    documentsIndexHandler db,
+    documentsIndexHandler db indexRef,
     documentPageHandler db,
     dir "static" $ serveDirectory DisableBrowsing [] static_dir]

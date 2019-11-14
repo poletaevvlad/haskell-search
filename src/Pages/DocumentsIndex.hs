@@ -12,9 +12,12 @@ import Presentation.Layout(appLayout, paginator)
 import Presentation.AlphabeticalIndex(alphabeticalIndex)
 import Presentation.DocViews(documentPreview)
 import Database.DocumentsDB(Database, AlphaIndexEntry(..), buildAlphaIndex,
-  queryDocuments, paginationRange)
+  queryDocuments, paginationRange, Range(Range), getDocumentsByIds)
 import Database.Documents(Document(getDocUrl))
 import qualified Text.Blaze.Html5 as H
+import Search.Index(Index, getRequestDocIds, processQuery)
+import Data.IORef
+import Data.Maybe(isNothing, fromJust)
 
 
 data PageNumber = PageNumber { fromPageNumber :: Int } deriving (Show)
@@ -87,8 +90,8 @@ renderDocumentsIndex queryType pageNum (alphaIndex, documents, totalPages) = do
         _ -> ""
 
 
-documentsIndexHandler :: Database -> ServerPart Response
-documentsIndexHandler db =
+documentsIndexHandler :: Database -> (IORef (Maybe Index)) -> ServerPart Response
+documentsIndexHandler db indexRef =
   msum [
     optPageNum $ docsIndex $ IndexQuery All,
     path $ \index -> optPageNum $ docsIndex $ IndexQuery index,
@@ -106,7 +109,16 @@ documentsIndexHandler db =
       alphaIndex <- buildAlphaIndex db
       (documents, docsCount) <- case queryType of
         IndexQuery index -> queryDocuments db index $ paginationRange 20 pageNum
-        SearchQuery query -> return ([], 0)
+        SearchQuery query -> do
+          index <- readIORef indexRef
+          if isNothing index then return ([], 0)
+          else do
+            let request = processQuery query $ fromJust index
+            docIds <- getRequestDocIds request $ fromJust index
+            let docsCount = length docIds
+            let (Range skip count) = paginationRange 20 pageNum
+            docs <- getDocumentsByIds db $ take count $ drop skip docIds
+            return (docs, docsCount)
       let pagesNum = ceiling $ fromIntegral docsCount / (20 :: Double)
       return $ Just (All:alphaIndex, documents, pagesNum)
 
