@@ -60,6 +60,7 @@ library webse-lib
                        Pages.DocumentPage,
                        Pages.DocumentsIndex,
                        Pages.UrlUtils,
+                       Pages.AdminPages,
                        Search.TermIndex,
                        Search.InvertedIndex,
                        Search.IndexBuilding,
@@ -74,7 +75,8 @@ executable webse
   main-is:             Main.hs
   other-modules:       Paths_webse
   build-depends:       happstack-server >= 7.4.0,
-                       webse-lib
+                       webse-lib,
+                       bytestring >= 0.10.0.0,
   hs-source-dirs:      exe
 
 

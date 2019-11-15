@@ -110,8 +110,6 @@ generateAuthSecret conf = do
   (tokenString, gen1) <- generateRandom tokenSize <$> (newGenIO :: IO HmacDRBG)
   let (iv, _) = generateRandom 16 gen1
   let token = Token tokenString
-  putStrLn $ show time
-  putStrLn $ show $ addUTCTime (auConfTimeOut conf) time
   let encrypted = mconcat [iv, encrypt conf iv $ Binary.encode $ TokenStruct time token]
   return $ Binary.encode $ AuthSecret token encrypted
 
