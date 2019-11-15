@@ -1,5 +1,5 @@
 module Pages.Auth (AuthConf(..), Token(Token), TokenStruct(TokenStruct),
-  AuthSecret(AuthSecret), validateAuthSecret) where
+  AuthSecret(AuthSecret), validateAuthSecret, generateAuthSecret) where
 
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString as BSStrict
@@ -8,10 +8,12 @@ import Data.Binary (Binary)
 import qualified Data.Binary as Binary
 import Data.Time (nominalDiffTimeToSeconds)
 import Data.Time.Clock (UTCTime, NominalDiffTime, addUTCTime,
-  secondsToNominalDiffTime)
+  secondsToNominalDiffTime, getCurrentTime)
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds, posixSecondsToUTCTime)
-import Crypto.Cipher.AES (decryptCBC, initAES)
+import Crypto.Cipher.AES (decryptCBC, initAES, encryptCBC)
 import Data.Maybe (isJust)
+import Crypto.Random (newGenIO, genBytes, CryptoRandomGen)
+import Crypto.Random.DRBG (HmacDRBG)
 
 data AuthConf =
   AuthConf { auConfTimeOut :: NominalDiffTime
@@ -78,5 +80,33 @@ validateAuthSecret conf currentTime secretString = isJust $ do
   (AuthSecret token encrypted) <- maybeDecode secretString
   (TokenStruct time token2) <- maybeDecrypt conf encrypted >>= maybeDecode
   validIf $ token == token2
-  validIf $ currentTime > time
-  validIf $ (addUTCTime (auConfTimeOut conf) time) < currentTime
+  validIf $ time <= currentTime
+  validIf $ currentTime < (addUTCTime (auConfTimeOut conf) time)
+
+
+encrypt :: AuthConf -> ByteString -> ByteString -> ByteString
+encrypt conf iv message = ByteString.fromStrict $ encryptCBC aes (ByteString.toStrict iv) padded
+  where
+    aes = initAES $ ByteString.toStrict $ auConfSecret conf
+    len = ByteString.length message
+    padded = ByteString.toStrict $ if len `mod` 16 == 0 then message
+      else mconcat [message, ByteString.pack $ take (fromIntegral $ len `mod` 16) $ repeat 0]
+
+
+generateRandom :: (CryptoRandomGen g) => Int -> g -> (ByteString, g)
+generateRandom size gen =
+  case genBytes size gen of
+    Left err -> error $ show err
+    Right (string, newGen) -> (ByteString.fromStrict string, newGen)
+
+
+generateAuthSecret :: AuthConf -> IO ByteString
+generateAuthSecret conf = do
+  time <- getCurrentTime
+  (tokenString, gen1) <- generateRandom tokenSize <$> (newGenIO :: IO HmacDRBG)
+  let (iv, _) = generateRandom 16 gen1
+  let token = Token tokenString
+  putStrLn $ show time
+  putStrLn $ show $ addUTCTime (auConfTimeOut conf) time
+  let encrypted = mconcat [iv, encrypt conf iv $ Binary.encode $ TokenStruct time token]
+  return $ Binary.encode $ AuthSecret token encrypted

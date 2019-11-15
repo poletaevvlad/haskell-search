@@ -42,7 +42,9 @@ library webse-lib
                        binary >= 0.8.0.0,
                        bytestring >= 0.10.0.0,
                        cipher-aes >= 0.2.11,
-                       time >= 1.9.0
+                       time >= 1.9.0,
+                       crypto-api >= 0.13.0,
+                       DRBG >= 0.5.0
   exposed-modules:     Presentation.Layout,
                        Presentation.DocViews,
                        Presentation.AlphabeticalIndex,

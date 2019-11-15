@@ -61,9 +61,8 @@ spec = do
     let decoded = AuthSecret (Token tokenString) bs
     testBinary decoded encoded
 
+  let conf = AuthConf { auConfTimeOut = 5000, auConfSecret = key }
   describe "validateAuthSecret" $ do
-    let conf = AuthConf { auConfTimeOut = 5000, auConfSecret = key }
-
     it "should not validate if string is not a valid secret object" $ do
       time <- Clock.getCurrentTime
       validateAuthSecret conf time (pack [0x12, 0x13, 0x14]) `shouldBe` False
@@ -94,3 +93,16 @@ spec = do
       let encrypted = encrypt $ TokenStruct (time `addTime` 4000) $ Token tokenString
       let message = mconcat [tokenString, B.encode (fromIntegral $ length encrypted :: B.Word64), iv, encrypted]
       validateAuthSecret conf time message `shouldBe` False
+  describe "generateAuthSecret" $ do
+    it "should generate dirrerent secrets" $ do
+      secret1 <- generateAuthSecret conf
+      secret2 <- generateAuthSecret conf
+      secret1 `shouldNotBe` secret2
+    it "should generate valid secret" $ do
+      secret <- generateAuthSecret conf
+      time <- Clock.getCurrentTime
+      validateAuthSecret conf time secret `shouldBe` True
+    it "should generate expiring secret" $ do
+      secret <- generateAuthSecret conf
+      time <- Clock.getCurrentTime
+      validateAuthSecret conf (time `addTime` 6000) secret `shouldBe` False
