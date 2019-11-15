@@ -1,6 +1,6 @@
 module Pages.Auth (AuthConf(..), Token(Token), TokenStruct(TokenStruct),
   AuthSecret(AuthSecret), validateAuthSecret, generateAuthSecret,
-  checkPassword) where
+  checkPassword, requireLogin) where
 
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString as BSStrict
@@ -17,6 +17,12 @@ import Crypto.Random (newGenIO, genBytes, CryptoRandomGen)
 import Crypto.Random.DRBG (HmacDRBG)
 import qualified Crypto.Hash.SHA256 as SHA256
 import qualified Data.ByteString.Lazy.UTF8 as BLU
+import Happstack.Server (HasRqData, lookCookieValue, rqDataError, Errors(..),
+  require)
+import TextUtils.Processing (hexDecode)
+import Control.Monad (MonadPlus)
+import Control.Monad.IO.Class (MonadIO)
+
 
 data AuthConf =
   AuthConf { auConfTimeOut :: NominalDiffTime
@@ -120,3 +126,14 @@ checkPassword :: AuthConf -> String -> Bool
 checkPassword conf password =
   let hash = ByteString.fromStrict $ SHA256.hashlazy $ BLU.fromString password
   in hash == auConfPasswordHash conf
+
+
+requireLogin :: (HasRqData m, MonadIO m, MonadPlus m) => AuthConf -> m ()
+requireLogin conf = do
+  value <- lookCookieValue "auth"
+  case hexDecode value of
+    Nothing -> rqDataError $ Errors ["Cannot decode cookie from hex"]
+    Just bytes -> require (Just <$> getCurrentTime) $ \time ->
+      if validateAuthSecret conf time bytes
+        then return ()
+        else rqDataError $ Errors ["Invalid token"]

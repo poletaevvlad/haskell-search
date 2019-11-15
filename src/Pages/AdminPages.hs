@@ -10,6 +10,7 @@ import qualified Text.Blaze.Html5 as H
 import Pages.Auth (AuthConf(auConfTimeOut), checkPassword, generateAuthSecret)
 import TextUtils.Processing(hexEncode)
 import Data.Time.Clock (nominalDiffTimeToSeconds)
+import Pages.Auth (requireLogin)
 
 handleLoginForm :: AuthConf -> ServerPart Response
 handleLoginForm conf = do
@@ -44,8 +45,15 @@ handleLogout = do
   tempRedirect "/" $ toResponse ""
 
 
+handleAdminPage :: ServerPart Response
+handleAdminPage = do
+  ok $ toResponse $ "hello"
+
+
+
 adminHandler :: AuthConf -> ServerPart Response
 adminHandler authConf = msum [
   dir "admin" $ dir "login" $ handleLoginForm authConf,
-  dir "admin" $ dir "logout" $ handleLogout
+  dir "admin" $ dir "logout" $ handleLogout,
+  dir "admin" $ requireLogin authConf >> handleAdminPage
   ]
