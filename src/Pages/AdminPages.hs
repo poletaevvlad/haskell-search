@@ -10,12 +10,14 @@ import qualified Text.Blaze.Html5 as H
 import Pages.Auth (AuthConf(auConfTimeOut), checkPassword, generateAuthSecret)
 import TextUtils.Processing(hexEncode)
 import Data.Time.Clock (nominalDiffTimeToSeconds)
-import Pages.Auth (requireLogin)
+import Pages.Auth (requireLogin, isLoggedIn)
 
 handleLoginForm :: AuthConf -> ServerPart Response
 handleLoginForm conf = do
   rq <- askRq
-  if rqMethod rq /= POST
+  loggedIn <- isLoggedIn conf
+  if loggedIn then tempRedirect "/admin" $ toResponse ""
+  else if rqMethod rq /= POST
     then showLoginForm Nothing
     else do
       decodeBody $ defaultBodyPolicy "/tmp/" 0 1024 1024

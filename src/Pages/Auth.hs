@@ -1,6 +1,6 @@
 module Pages.Auth (AuthConf(..), Token(Token), TokenStruct(TokenStruct),
   AuthSecret(AuthSecret), validateAuthSecret, generateAuthSecret,
-  checkPassword, requireLogin) where
+  checkPassword, requireLogin, isLoggedIn) where
 
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString as BSStrict
@@ -18,7 +18,7 @@ import Crypto.Random.DRBG (HmacDRBG)
 import qualified Crypto.Hash.SHA256 as SHA256
 import qualified Data.ByteString.Lazy.UTF8 as BLU
 import Happstack.Server (HasRqData, lookCookieValue, rqDataError, Errors(..),
-  require)
+  require, getDataFn, ServerMonad)
 import TextUtils.Processing (hexDecode)
 import Control.Monad (MonadPlus)
 import Control.Monad.IO.Class (MonadIO)
@@ -128,12 +128,20 @@ checkPassword conf password =
   in hash == auConfPasswordHash conf
 
 
-requireLogin :: (HasRqData m, MonadIO m, MonadPlus m) => AuthConf -> m ()
+isLoggedIn :: (ServerMonad m, HasRqData m, MonadIO m, MonadPlus m) => AuthConf -> m Bool
+isLoggedIn conf = do
+  cookieValue <- getDataFn $ lookCookieValue "auth"
+  case cookieValue of
+    Left _ -> return False
+    Right value ->
+      case hexDecode value of
+        Nothing -> return False
+        Just bytes -> require (Just <$> getCurrentTime) $ \time ->
+          return $ validateAuthSecret conf time bytes
+
+
+requireLogin :: (ServerMonad m, HasRqData m, MonadIO m, MonadPlus m) => AuthConf -> m ()
 requireLogin conf = do
-  value <- lookCookieValue "auth"
-  case hexDecode value of
-    Nothing -> rqDataError $ Errors ["Cannot decode cookie from hex"]
-    Just bytes -> require (Just <$> getCurrentTime) $ \time ->
-      if validateAuthSecret conf time bytes
-        then return ()
-        else rqDataError $ Errors ["Invalid token"]
+  loggedIn <- isLoggedIn conf
+  if loggedIn then return ()
+              else rqDataError $ Errors ["Not logged in"]
