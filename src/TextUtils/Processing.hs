@@ -1,9 +1,14 @@
-module TextUtils.Processing (getExcerpt, splitWords, getPositions,
-  filterChars) where
+module TextUtils.Processing (getExcerpt, splitWords, getPositions, filterChars,
+  hexEncode, hexDecode) where
 
 import Data.Char
 import Data.Map(Map)
 import qualified Data.Map as M
+import qualified Data.Binary as B
+import Numeric(showHex)
+import Data.ByteString.Lazy(ByteString)
+import qualified Data.ByteString.Lazy as ByteString
+import Data.Char (ord)
 
 
 getExcerpt :: Int -> String -> String
@@ -56,3 +61,32 @@ filterChars = concatMap lowerLatin
       | x == '\'' = []
       | otherwise = [' ']
 
+
+hexEncode :: ByteString -> String
+hexEncode = encodeList . ByteString.unpack
+  where
+    encodeList :: [B.Word8] -> String
+    encodeList [] = ""
+    encodeList (word:rest) =
+      let a = word `div` 16
+          b = word `mod` 16
+      in showHex a $ showHex b $ encodeList rest
+
+
+hexDecode :: String -> Maybe ByteString
+hexDecode str = ByteString.pack <$> decodeList str
+  where
+    decodeList :: String -> Maybe [B.Word8]
+    decodeList [] = Just []
+    decodeList [_] = Nothing
+    decodeList (a:b:rest) = do
+      ia <- hexToInt a
+      ib <- hexToInt b
+      ((fromIntegral $ ia * 16 + ib):) <$> decodeList rest
+
+    hexToInt :: Char -> Maybe Int
+    hexToInt x
+      | x `elem` ['0'..'9'] = Just $ ord x - ord '0'
+      | x `elem` ['a'..'f'] = Just $ ord x - ord 'a' + 10
+      | x `elem` ['A'..'F'] = Just $ ord x - ord 'A' + 10
+      | otherwise = Nothing

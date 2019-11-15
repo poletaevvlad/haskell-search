@@ -2,6 +2,7 @@ module TextUtils.ProcessingSpec (spec) where
 
 import Test.Hspec
 import TextUtils.Processing
+import qualified Data.ByteString.Lazy as BS
 
 
 spec :: Spec
@@ -38,3 +39,21 @@ spec = do
       filterChars "Hello, World!" `shouldBe` "hello  world "
     it "should drop apostrophy" $ do
       filterChars "a'b'c'defg" `shouldBe` "abcdefg"
+
+  describe "hexEncode" $ do
+    it "should convert empty bytestring to empty string" $ do
+      hexEncode BS.empty `shouldBe` ""
+    it "should convert multiple numbers" $ do
+      hexEncode (BS.pack [0x45, 0x79, 0x61]) `shouldBe` "457961"
+    it "should add leading zeros" $ do
+      hexEncode (BS.pack [0x00, 0x05, 0x00]) `shouldBe` "000500"
+
+  describe "hexDecode" $ do
+    it "should convert empty string to empty bytestring" $ do
+      hexDecode "" `shouldBe` Just BS.empty
+    it "should parse hex string" $ do
+      hexDecode "0123456789abcdefABCDEF" `shouldBe` Just (BS.pack [0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef])
+    it "should fail if unknown char is found" $ do
+      hexDecode "0123m567" `shouldBe` Nothing
+    it "should fail if the string is of odd length" $ do
+      hexDecode "0123567" `shouldBe` Nothing
