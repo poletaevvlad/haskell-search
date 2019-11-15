@@ -61,7 +61,7 @@ spec = do
     let decoded = AuthSecret (Token tokenString) bs
     testBinary decoded encoded
 
-  let conf = AuthConf { auConfTimeOut = 5000, auConfSecret = key }
+  let conf = AuthConf { auConfTimeOut = 5000, auConfSecret = key, auConfPasswordHash = pack [] }
   describe "validateAuthSecret" $ do
     it "should not validate if string is not a valid secret object" $ do
       time <- Clock.getCurrentTime
@@ -106,3 +106,15 @@ spec = do
       secret <- generateAuthSecret conf
       time <- Clock.getCurrentTime
       validateAuthSecret conf (time `addTime` 6000) secret `shouldBe` False
+
+  describe "checkPassword" $ do
+    let hash = [0x5e, 0x88, 0x48, 0x98, 0xda, 0x28, 0x04, 0x71,
+                0x51, 0xd0, 0xe5, 0x6f, 0x8d, 0xc6, 0x29, 0x27,
+                0x73, 0x60, 0x3d, 0x0d, 0x6a, 0xab, 0xbd, 0xd6,
+                0x2a, 0x11, 0xef, 0x72, 0x1d, 0x15, 0x42, 0xd8] :: [B.Word8]
+    it "validates password if passwords match" $ do
+      let config = conf { auConfPasswordHash = pack hash }
+      checkPassword config "password" `shouldBe` True
+    it "does not validate password if passwords do not match" $ do
+      let config = conf { auConfPasswordHash = pack hash }
+      checkPassword config "hunter2" `shouldBe` False

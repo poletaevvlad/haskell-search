@@ -1,5 +1,6 @@
 module Pages.Auth (AuthConf(..), Token(Token), TokenStruct(TokenStruct),
-  AuthSecret(AuthSecret), validateAuthSecret, generateAuthSecret) where
+  AuthSecret(AuthSecret), validateAuthSecret, generateAuthSecret,
+  checkPassword) where
 
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString as BSStrict
@@ -14,10 +15,13 @@ import Crypto.Cipher.AES (decryptCBC, initAES, encryptCBC)
 import Data.Maybe (isJust)
 import Crypto.Random (newGenIO, genBytes, CryptoRandomGen)
 import Crypto.Random.DRBG (HmacDRBG)
+import qualified Crypto.Hash.SHA256 as SHA256
+import qualified Data.ByteString.Lazy.UTF8 as BLU
 
 data AuthConf =
   AuthConf { auConfTimeOut :: NominalDiffTime
-           , auConfSecret :: ByteString }
+           , auConfSecret :: ByteString
+           , auConfPasswordHash :: ByteString }
 
 
 data Token = Token ByteString deriving (Show, Eq)
@@ -110,3 +114,11 @@ generateAuthSecret conf = do
   putStrLn $ show $ addUTCTime (auConfTimeOut conf) time
   let encrypted = mconcat [iv, encrypt conf iv $ Binary.encode $ TokenStruct time token]
   return $ Binary.encode $ AuthSecret token encrypted
+
+
+-- password verification
+
+checkPassword :: AuthConf -> String -> Bool
+checkPassword conf password =
+  let hash = ByteString.fromStrict $ SHA256.hashlazy $ BLU.fromString password
+  in hash == auConfPasswordHash conf
