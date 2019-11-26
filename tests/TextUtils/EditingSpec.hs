@@ -28,5 +28,19 @@ spec = do
     it "should not add newline before long word" $ do
       toEditor ["1234567890123 456 789"] 10 `shouldBe` "1234567890123\n456 789"
 
+  describe "fromEditor" $ do
+    it "should merge lines" $ do
+      fromEditor resText `shouldBe` text
+    it "should remove double spaces" $ do
+      fromEditor "hello    world" `shouldBe` ["hello world"]
+    it "should remove spaces from the begining" $ do
+      fromEditor "   hello" `shouldBe` ["hello"]
+    it "should remove spaces from the end" $ do
+      fromEditor "hello   " `shouldBe` ["hello"]
+    it "should ignore third newline" $ do
+      fromEditor "hello\n\n\nworld" `shouldBe` ["hello", "world"]
+    it "should ignore multiple line breaks" $ do
+      fromEditor "hello\n\n\n\nworld" `shouldBe` ["hello", "world"]
+
 
 
