@@ -4,7 +4,7 @@ module Database.DocumentsDB (Database, loadDatabase, closeDatabase,
   _createInMemory, _getRawConnection, getDocumentById, getDocumentByUrl,
   getDocumentContent, storeDocument, AlphaIndexEntry(All, Character, Symbols),
   buildAlphaIndex, Range(Range), paginationRange, queryDocuments, queryAllTexts,
-  getDocumentsByIds) where
+  getDocumentsByIds, deleteDocument) where
 
 import qualified Database.SQLite.Simple as SQLite
 import Database.SQLite.Simple (NamedParam((:=)))
@@ -18,6 +18,7 @@ import TextUtils.Processing
 import Data.Text(pack)
 import qualified Data.IntMap as IntMap
 import Data.Maybe (isJust, fromJust)
+import Control.Monad (when)
 
 data Database = Database FilePath SQLite.Connection
 
@@ -114,6 +115,15 @@ storeDocument (Database path conn) title contents = do
 
   writeFile (path ++ "/docs/" ++ show insertedId) (fileContents ++ "\n")
   return doc { getDocId = fromIntegral insertedId }
+
+
+deleteDocument :: Database -> Document -> IO ()
+deleteDocument (Database path conn) doc =
+  do
+    SQLite.execute conn "DELETE FROM documents WHERE rowid=?" (SQLite.Only $ getDocId doc)
+    let fileName = path ++ "/docs/" ++ (show $ getDocId doc)
+    fileExist <- doesFileExist fileName
+    when fileExist $ removeFile fileName
 
 
 data AlphaIndexEntry = All | Character Char | Symbols

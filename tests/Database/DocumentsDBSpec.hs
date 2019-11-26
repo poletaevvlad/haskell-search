@@ -132,6 +132,36 @@ spec = do
         closeDatabase db
         getDocUrl doc `shouldBe` "url-2")
 
+  describe "deleteDocument" $ do
+    it "should delete db record and file on disk" $ do
+      (d11, d12, d21, d22, id1, id2, ids1, ids2) <- withSystemTempDirectory "database" (\path -> do
+        db <- loadDatabase path
+        doc1 <- storeDocument db "First" ["a", "b"]
+        doc2 <- storeDocument db "Second" ["a", "c"]
+        let conn = _getRawConnection db
+
+        d1Exist1 <- doesFileExist $ path ++ "/docs/" ++ (show $ getDocId doc1)
+        d2Exist1 <- doesFileExist $ path ++ "/docs/" ++ (show $ getDocId doc2)
+        ids1 <- SQLite.query_ conn "SELECT rowid FROM documents" :: IO [SQLite.Only Int]
+
+        deleteDocument db doc1
+        d1Exist2 <- doesFileExist $ path ++ "/docs/" ++ (show $ getDocId doc1)
+        d2Exist2 <- doesFileExist $ path ++ "/docs/" ++ (show $ getDocId doc2)
+        ids2 <- SQLite.query_ conn "SELECT rowid FROM documents" :: IO [SQLite.Only Int]
+
+        closeDatabase db
+        return (d1Exist1, d2Exist1, d1Exist2, d2Exist2, getDocId doc1, getDocId doc2, ids1, ids2))
+      (d11, d12) `shouldBe` (True, True)
+      (d21, d22) `shouldBe` (False, True)
+      map SQLite.fromOnly ids1 `shouldBe` [id1, id2]
+      map SQLite.fromOnly ids2 `shouldBe` [id2]
+
+    it "should fail silently if no such document exist" $ doc1
+      withSystemTempDirectory "database" (\path -> do
+        db <- loadDatabase path
+        deleteDocument db doc1
+        closeDatabase db)
+
   describe "buildAlphaIndex" $ do
     it "should correctly generate alphabetical index" $ do
       (db, _) <- prepareDB [("A doc", "url-1", "D1.", 2, 45),
