@@ -16,6 +16,14 @@ doc = Document { getDocId=5
                , getDocFileSize=500
                , getDocWordsCount=24 }
 
+anotherDoc :: Document
+anotherDoc = Document { getDocId=7
+                      , getDocUrl="/doc/another"
+                      , getDocName="Another document"
+                      , getDocExcerpt=""
+                      , getDocFileSize=600
+                      , getDocWordsCount=17 }
+
 
 spec :: Spec
 spec = do
@@ -31,4 +39,18 @@ spec = do
     it "should generate html and escape special characters" $ do
       let expected = "<h1>Document&#39;s name</h1><p>paragraph 1</p><p>paragraph with &lt;b&gt;tags&lt;/b&gt;</p>"
       renderHtml (fullDocumentView doc ["paragraph 1", "paragraph with <b>tags</b>"]) `shouldBe` expected
+
+  describe "smallDocumentsList" $ do
+    it "should generate html" $ do
+      let expected = "<ol start=\"2\">\
+        \<li>\
+          \<a href=\"5\">Document&#39;s name</a>\
+          \<div class=\"doc-meta\">24 words, 500 bytes</div>\
+        \</li>\
+        \<li>\
+          \<a href=\"7\">Another document</a>\
+          \<div class=\"doc-meta\">17 words, 600 bytes</div>\
+        \</li>\
+      \</ol>"
+      renderHtml (smallDocumentsList (show . getDocId) [doc, anotherDoc] 2) `shouldBe` expected
 
