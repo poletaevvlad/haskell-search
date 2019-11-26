@@ -1,7 +1,21 @@
-module TextUtils.Editing(toEditor, fromEditor) where
+module TextUtils.Editing(toEditor, fromEditor, removeSpaces) where
 
 import Data.List.Split(splitWhen)
 import Data.Char(isSpace)
+
+
+removeSpaces :: String -> String
+removeSpaces "" = ""
+removeSpaces text =
+  let res = removeSpaces' False text
+  in if (not $ null res) && (isSpace $ head res) then tail res else res
+  where
+    removeSpaces' :: Bool -> String -> String
+    removeSpaces' _ "" = ""
+    removeSpaces' addSpace (c:rest)
+      | isSpace c = removeSpaces' True rest
+      | otherwise = if addSpace then ' ':c:(removeSpaces' False rest)
+                                else c:(removeSpaces' False rest)
 
 
 toEditor :: [String] -> Int -> String
@@ -21,20 +35,8 @@ toEditor (line:rest) width = (toEditor [line] width) ++ "\n\n" ++ toEditor rest 
 
 
 fromEditor :: String -> [String]
-fromEditor text = reverse $ map (removeSpaces . reverse) $ filter (not . null) $ splitIntoLines [""] text
+fromEditor text = reverse $ filter (not . null) $ map (removeSpaces . reverse) $ splitIntoLines [""] text
   where
-    removeSpaces :: String -> String
-    removeSpaces text =
-      let res = removeSpaces' False text
-      in if isSpace $ head res then tail res else res
-
-    removeSpaces' :: Bool -> String -> String
-    removeSpaces' _ "" = ""
-    removeSpaces' addSpace (c:rest)
-      | isSpace c = removeSpaces' True rest
-      | otherwise = if addSpace then ' ':c:(removeSpaces' False rest)
-                                else c:(removeSpaces' False rest)
-
     splitIntoLines :: [String] -> String -> [String]
     splitIntoLines [] _ = error "Illegal state"
     splitIntoLines text "" = text

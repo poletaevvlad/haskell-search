@@ -14,7 +14,7 @@ data EditorType = Create | Edit
 
 docEditor :: EditorType -> String -> String -> H.Html
 docEditor edType title text = do
-  H.form ! A.class_ "edit-form" ! A.action "POST" $ do
+  H.form ! A.class_ "edit-form" ! A.method "POST" $ do
     H.div ! A.class_ "form-row" $ do
       H.label "Title:" ! A.for "title"
       H.input ! A.type_ "text" ! A.name "title" ! A.value (toValue title)

@@ -41,6 +41,10 @@ spec = do
       fromEditor "hello\n\n\nworld" `shouldBe` ["hello", "world"]
     it "should ignore multiple line breaks" $ do
       fromEditor "hello\n\n\n\nworld" `shouldBe` ["hello", "world"]
+    it "should return empty list if no non-whitespace characters are passed" $ do
+      fromEditor "\n\n\n\n  " `shouldBe` []
+    it "should return empty list if nothing is passed" $ do
+      fromEditor "" `shouldBe` []
 
 
 

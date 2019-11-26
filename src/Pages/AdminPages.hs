@@ -4,11 +4,13 @@ import Control.Monad(msum)
 import Happstack.Server (ok, ServerPart, Response, toResponse, tempRedirect,
   dir, askRq, require, look, getDataFn, rqMethod, decodeBody, Method(POST),
   defaultBodyPolicy, mkCookie, CookieLife(MaxAge), addCookie, expireCookie,
-  path, nullDir)
+  path, nullDir, method)
 import Presentation.Layout(appLayout, paginator)
 import Presentation.Login(loginForm)
 import Presentation.DocViews(smallDocumentsList)
+import Text.Blaze(string, (!), toValue)
 import qualified Text.Blaze.Html5 as H
+import qualified Text.Blaze.Html5.Attributes as A
 import Pages.Auth (AuthConf(auConfTimeOut), checkPassword, generateAuthSecret)
 import TextUtils.Processing(hexEncode)
 import Data.Time.Clock (nominalDiffTimeToSeconds)
@@ -18,7 +20,7 @@ import Pages.DocumentsIndex(optPageNum, PageNumber(..))
 import qualified Database.DocumentsDB as DB
 import Presentation.DocEditor
 import Data.Maybe
-import TextUtils.Editing(toEditor)
+import TextUtils.Editing(toEditor, removeSpaces, fromEditor)
 
 handleLoginForm :: AuthConf -> ServerPart Response
 handleLoginForm conf = do
@@ -73,10 +75,30 @@ handleAdminPage pageNumber db =
 
 handleEditPage :: Maybe (Document, [String]) -> ServerPart Response
 handleEditPage mdoc = do
-  let editorType = if isNothing mdoc then Create else Edit
-  let (title, content) = if isNothing mdoc then ("", "") else let Just (doc, docContents) = mdoc in (getDocName doc, toEditor docContents 80)
-  ok $ toResponse $ appLayout "Editing" "" $ do
-    docEditor editorType title content
+  msum [ method POST >> decodeBody (defaultBodyPolicy "/tmp/" 0 10485760 1024) >> (do
+      title <- removeSpaces <$> look "title"
+      content <- look "text"
+      let parsedContent = fromEditor content
+      error <- case (title, parsedContent) of
+        ("", _) -> return $ Just "Title must not be empty"
+        (_, []) -> return $ Just "Document body must not be empty"
+        _ -> return $ Nothing
+      renderEditPage error title content),
+    (case mdoc of
+      Nothing -> renderEditPage Nothing "" ""
+      Just (doc, content) -> renderEditPage Nothing (getDocName doc) $ toEditor content 80)]
+  where
+    renderEditPage :: Maybe String -> String -> String -> ServerPart Response
+    renderEditPage error title content =
+      let editorType = if isNothing mdoc then Create else Edit
+      in ok $ toResponse $ appLayout "Editing" "" $ do
+        case error of
+          Nothing -> mempty
+          Just error -> H.div ! A.class_ (toValue "form-error") $ do
+            H.b (H.toHtml "Error:")
+            string $ ' ':error
+        docEditor editorType title content
+
 
 
 adminHandler :: AuthConf -> DB.Database -> ServerPart Response

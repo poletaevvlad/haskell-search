@@ -223,7 +223,7 @@ input[type=password], input[type=text]{
     color: white;
 }
 
-.login-error{
+.login-error, .form-error{
     text-align: center;
     margin-bottom: 20px;
 }

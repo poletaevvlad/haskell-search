@@ -8,7 +8,7 @@ spec :: Spec
 spec = do
   describe "docEditor" $ do
     it "should generate form for document creation" $ do
-      let expected = "<form class=\"edit-form\" action=\"POST\">\
+      let expected = "<form class=\"edit-form\" method=\"POST\">\
           \<div class=\"form-row\">\
             \<label for=\"title\">Title:</label>\
             \<input type=\"text\" name=\"title\" value=\"\">\
@@ -19,7 +19,7 @@ spec = do
       renderHtml (docEditor Create "" "") `shouldBe` expected
 
     it "should generate form for document updating" $ do
-      let expected = "<form class=\"edit-form\" action=\"POST\">\
+      let expected = "<form class=\"edit-form\" method=\"POST\">\
           \<div class=\"form-row\">\
             \<label for=\"title\">Title:</label>\
             \<input type=\"text\" name=\"title\" value=\"Document Title\">\
