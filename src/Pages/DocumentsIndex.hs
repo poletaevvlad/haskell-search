@@ -1,4 +1,4 @@
-module Pages.DocumentsIndex(documentsIndexHandler) where
+module Pages.DocumentsIndex(documentsIndexHandler, optPageNum, PageNumber(..)) where
 
 import Text.Read(readMaybe)
 import Control.Monad

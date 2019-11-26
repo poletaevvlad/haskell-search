@@ -224,3 +224,16 @@ input[type=password]{
     text-align: center;
     margin-bottom: 20px;
 }
+
+.toolbar{
+    text-align: right;
+}
+
+ol, ul, li{
+    margin: 0;
+    padding: 0;
+}
+
+ol, ul{
+    margin: 20px 0 20px 40px;
+}
