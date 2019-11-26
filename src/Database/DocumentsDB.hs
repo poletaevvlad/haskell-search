@@ -4,7 +4,7 @@ module Database.DocumentsDB (Database, loadDatabase, closeDatabase,
   _createInMemory, _getRawConnection, getDocumentById, getDocumentByUrl,
   getDocumentContent, storeDocument, AlphaIndexEntry(All, Character, Symbols),
   buildAlphaIndex, Range(Range), paginationRange, queryDocuments, queryAllTexts,
-  getDocumentsByIds, deleteDocument) where
+  getDocumentsByIds, deleteDocument, updateDocument) where
 
 import qualified Database.SQLite.Simple as SQLite
 import Database.SQLite.Simple (NamedParam((:=)))
@@ -91,17 +91,20 @@ getDocumentContent :: Database -> Document -> IO [String]
 getDocumentContent db doc = getDocumentContentById db $ getDocId doc
 
 
+getUrl :: SQLite.Connection -> Int -> String -> IO String
+getUrl conn ignoreId title = do
+  let plainUrl = escapeFileName title
+  let urlsQuery = "SELECT url FROM documents WHERE url LIKE ? AND rowid != ?"
+  urls <- SQLite.query conn urlsQuery (plainUrl ++ "%", ignoreId) :: IO [SQLite.Only String]
+  let urlStrings = map SQLite.fromOnly urls
+  let candidateUrls = plainUrl:(map ((\x -> plainUrl ++ "-" ++ x) . show) ([2..] :: [Int]))
+  return $ head $ filter (`notElem` urlStrings) candidateUrls
+
+
 storeDocument :: Database -> String -> [String] -> IO Document
 storeDocument (Database path conn) title contents = do
   let fileContents = mconcat $ intersperse "\n" contents
-  let plainUrl = escapeFileName title
-
-  let urlsQuery = "SELECT url FROM documents WHERE url LIKE ?"
-  urls <- SQLite.query conn urlsQuery (SQLite.Only (plainUrl ++ "%")) :: IO [SQLite.Only String]
-  let urlStrings = map SQLite.fromOnly urls
-  let candidateUrls = plainUrl:(map ((\x -> plainUrl ++ "-" ++ x) . show) ([2..] :: [Int]))
-  let url = head $ filter (`notElem` urlStrings) candidateUrls
-
+  url <- getUrl conn (-1) title
   let doc = Document { getDocId = 0
                      , getDocUrl = url
                      , getDocName = title
@@ -116,6 +119,21 @@ storeDocument (Database path conn) title contents = do
   writeFile (path ++ "/docs/" ++ show insertedId) (fileContents ++ "\n")
   return doc { getDocId = fromIntegral insertedId }
 
+
+updateDocument :: Database -> Document -> String -> [String] -> IO Document
+updateDocument (Database path conn) doc title contents = do
+  let fileContents = mconcat $ intersperse "\n" contents
+  newUrl <- getUrl conn (getDocId doc) title
+  let newDoc = doc { getDocUrl = newUrl
+                   , getDocName = title
+                   , getDocExcerpt = getExcerpt 50 fileContents
+                   , getDocFileSize = foldl (\s x -> s + 1 + length x) 0 contents
+                   , getDocWordsCount = length $ splitWords fileContents }
+  SQLite.execute conn "UPDATE documents SET url = ?, name = ?, excerpt = ?, fileSize = ?, wordsCount = ? \
+                      \WHERE rowid = ?" ( getDocUrl newDoc, getDocName newDoc, getDocExcerpt newDoc
+                                        , getDocFileSize newDoc, getDocWordsCount newDoc, getDocId newDoc)
+  writeFile (path ++ "/docs/" ++ (show $ getDocId newDoc)) (fileContents ++ "\n")
+  return newDoc
 
 deleteDocument :: Database -> Document -> IO ()
 deleteDocument (Database path conn) doc =

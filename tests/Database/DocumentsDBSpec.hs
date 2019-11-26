@@ -132,9 +132,45 @@ spec = do
         closeDatabase db
         getDocUrl doc `shouldBe` "url-2")
 
+  describe "updateDocument" $ do
+    it "should change document title in database and content on disk" $ do
+      withSystemTempDirectory "database" (\path -> do
+        db <- loadDatabase path
+        doc <- storeDocument db "Document title" ["first line", "second line", "third line"]
+        doc2 <- updateDocument db doc "Updated title" ["updated line", "updated second"]
+
+        getDocName doc2 `shouldBe` "Updated title"
+        getDocUrl doc2 `shouldBe` "updated-title"
+        getDocExcerpt doc2 `shouldBe` "updated line\nupdated second"
+        getDocWordsCount doc2 `shouldBe` 4
+        getDocFileSize doc2 `shouldBe` 28
+
+        savedFile <- readFile (path ++ "/docs/" ++ (show $ getDocId doc))
+        savedFile `shouldBe` "updated line\nupdated second\n"
+        closeDatabase db
+
+        conn <- SQLite.open (path ++ "/index.sqlite")
+        let query = "SELECT rowid, url, name, excerpt, fileSize, wordsCount \
+                    \FROM documents WHERE rowid = ?"
+        res <- SQLite.query conn query $ SQLite.Only $ getDocId doc :: IO [Document]
+        head res `shouldBe` doc2)
+    it "should generate new url on collision" $ do
+      withSystemTempDirectory "database" (\path -> do
+        db <- loadDatabase path
+        doc1 <- storeDocument db "First document" ["a"]
+        doc2 <- storeDocument db "Second document" ["b"]
+        doc2_new <- updateDocument db doc2 "First document" ["c"]
+        getDocUrl doc2_new `shouldBe` "first-document-2")
+    it "should keep the same url on update" $ do
+      withSystemTempDirectory "database" (\path -> do
+        db <- loadDatabase path
+        doc1 <- storeDocument db "First document" ["a"]
+        doc1_new <- updateDocument db doc1 "First document" ["c"]
+        getDocUrl doc1_new `shouldBe` "first-document")
+
   describe "deleteDocument" $ do
     it "should delete db record and file on disk" $ do
-      (d11, d12, d21, d22, id1, id2, ids1, ids2) <- withSystemTempDirectory "database" (\path -> do
+      withSystemTempDirectory "database" (\path -> do
         db <- loadDatabase path
         doc1 <- storeDocument db "First" ["a", "b"]
         doc2 <- storeDocument db "Second" ["a", "c"]
@@ -142,24 +178,23 @@ spec = do
 
         d1Exist1 <- doesFileExist $ path ++ "/docs/" ++ (show $ getDocId doc1)
         d2Exist1 <- doesFileExist $ path ++ "/docs/" ++ (show $ getDocId doc2)
+        (d1Exist1, d2Exist1) `shouldBe` (True, True)
         ids1 <- SQLite.query_ conn "SELECT rowid FROM documents" :: IO [SQLite.Only Int]
+        map SQLite.fromOnly ids1 `shouldBe` [getDocId doc1, getDocId doc2]
 
         deleteDocument db doc1
         d1Exist2 <- doesFileExist $ path ++ "/docs/" ++ (show $ getDocId doc1)
         d2Exist2 <- doesFileExist $ path ++ "/docs/" ++ (show $ getDocId doc2)
+        (d1Exist2, d2Exist2) `shouldBe` (False, True)
         ids2 <- SQLite.query_ conn "SELECT rowid FROM documents" :: IO [SQLite.Only Int]
+        map SQLite.fromOnly ids2 `shouldBe` [getDocId doc2]
 
-        closeDatabase db
-        return (d1Exist1, d2Exist1, d1Exist2, d2Exist2, getDocId doc1, getDocId doc2, ids1, ids2))
-      (d11, d12) `shouldBe` (True, True)
-      (d21, d22) `shouldBe` (False, True)
-      map SQLite.fromOnly ids1 `shouldBe` [id1, id2]
-      map SQLite.fromOnly ids2 `shouldBe` [id2]
+        closeDatabase db)
 
-    it "should fail silently if no such document exist" $ doc1
+    it "should fail silently if no such document exist" $ do
       withSystemTempDirectory "database" (\path -> do
         db <- loadDatabase path
-        deleteDocument db doc1
+        deleteDocument db $ Document { getDocId = 4 }
         closeDatabase db)
 
   describe "buildAlphaIndex" $ do
