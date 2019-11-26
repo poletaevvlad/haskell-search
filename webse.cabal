@@ -58,6 +58,7 @@ library webse-lib
                        TextUtils.Processing,
                        TextUtils.StateUtils,
                        TextUtils.FileUtils,
+                       TextUtils.Editing,
                        Pages.DocumentPage,
                        Pages.DocumentsIndex,
                        Pages.UrlUtils,
@@ -109,6 +110,7 @@ test-suite spec
                        TextUtils.ProcessingSpec,
                        TextUtils.StateUtilsSpec,
                        TextUtils.FileUtilsSpec,
+                       TextUtils.EditingSpec
                        Pages.UrlUtilsSpec,
                        Search.TermIndexSpec,
                        Search.InvertedIndexSpec,
