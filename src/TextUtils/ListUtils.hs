@@ -1,4 +1,4 @@
-module TextUtils.ListUtils(minTermDistance, minQueryDistance) where
+module TextUtils.ListUtils(minTermDistance, minQueryDistance, pairs) where
 
 
 posDistances :: [Int] -> [Int] -> [Int]
@@ -21,3 +21,8 @@ minQueryDistance :: (Eq a) => [a] -> a -> a -> Int
 minQueryDistance query t1 t2 = let l1 = getPositions query t1
                                    l2 = getPositions query t2
                                 in minTermDistance l1 l2
+
+
+pairs :: [a] -> [(a, a)]
+pairs [] = []
+pairs (x:xs) = (zip (repeat x) xs) ++ pairs xs

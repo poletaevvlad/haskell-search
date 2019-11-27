@@ -17,3 +17,13 @@ spec = do
     it "should return the minimum distance between elemented" $ do
       minQueryDistance "abcdcccacd" 'a' 'd' `shouldBe` 2
 
+  describe "pairs" $ do
+    it "should return empty if input is empty" $ do
+      pairs ([] :: [Int]) `shouldBe` []
+    it "should return empty if input is of length 1" $ do
+      pairs ([1] :: [Int]) `shouldBe` []
+    it "should return single pair if two-element list is passed" $ do
+      pairs ([1, 2] :: [Int]) `shouldBe` [(1, 2)]
+    it "should return all posible pairs" $ do
+      pairs ([1, 2, 3, 4] :: [Int]) `shouldBe` [(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]
+
