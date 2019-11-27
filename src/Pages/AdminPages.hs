@@ -19,6 +19,7 @@ import Database.Documents(Document(getDocId, getDocName, getDocUrl))
 import Pages.DocumentsIndex(optPageNum, PageNumber(..))
 import qualified Database.DocumentsDB as DB
 import Presentation.DocEditor
+import Presentation.Toolbar
 import Data.Maybe
 import TextUtils.Editing(toEditor, removeSpaces, fromEditor)
 
@@ -97,12 +98,21 @@ handleEditPage db mdoc = do
     renderEditPage error title content =
       let editorType = if isNothing mdoc then Create else Edit
       in ok $ toResponse $ appLayout "Editing" "" $ do
+        toolbar genToolbar
         case error of
           Nothing -> mempty
           Just error -> H.div ! A.class_ (toValue "form-error") $ do
             H.b (H.toHtml "Error:")
             string $ ' ':error
         docEditor editorType title content
+
+    genToolbar :: [ToolbarAction]
+    genToolbar = case mdoc of Nothing -> [allDocs]
+                              Just (doc, _) -> [allDocs, viewDoc doc, deleteDoc doc]
+      where
+        allDocs = Action "/admin" "All documents"
+        viewDoc doc = Action ("/doc/" ++ getDocUrl doc) "View document"
+        deleteDoc doc = ConfirmAction ("/admin/edit/" ++ (show $ getDocId doc) ++ "/delete") "Delete" "Are you sure you want to delete this document? This action cannot be reversed."
 
 
 
