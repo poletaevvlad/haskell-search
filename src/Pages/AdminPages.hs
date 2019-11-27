@@ -4,7 +4,7 @@ import Control.Monad(msum)
 import Happstack.Server (ok, ServerPart, Response, toResponse, tempRedirect,
   dir, askRq, require, look, getDataFn, rqMethod, decodeBody, Method(POST),
   defaultBodyPolicy, mkCookie, CookieLife(MaxAge), addCookie, expireCookie,
-  path, nullDir, method)
+  path, nullDir, method, rqDataError, Errors(..))
 import Presentation.Layout(appLayout, paginator)
 import Presentation.Login(loginForm)
 import Presentation.DocViews(smallDocumentsList)
@@ -116,15 +116,25 @@ handleEditPage db mdoc = do
         deleteDoc doc = ConfirmAction ("/admin/edit/" ++ (show $ getDocId doc) ++ "/delete") "Delete" "Are you sure you want to delete this document? This action cannot be reversed."
 
 
+handleNotFound :: AuthConf -> ServerPart Response
+handleNotFound conf = do
+  loggedIn <- isLoggedIn conf
+  if loggedIn
+    then rqDataError $ Errors []
+    else tempRedirect "/admin/login" $ toResponse ""
+
 
 adminHandler :: AuthConf -> DB.Database -> ServerPart Response
-adminHandler authConf db = msum [
-  dir "admin" $ dir "login" $ nullDir >> handleLoginForm authConf,
-  dir "admin" $ dir "logout" $ nullDir >> handleLogout,
-  dir "admin" $ optPageNum $ \pageNum -> requireLogin authConf >> handleAdminPage pageNum db,
-  dir "admin" $ dir "edit" $ path $ \docId -> nullDir >> (require (loadDocForEditing docId) $ \doc -> requireLogin authConf >> handleEditPage db (Just doc)),
-  dir "admin" $ dir "edit" $ nullDir >> requireLogin authConf >> handleEditPage db Nothing,
-  dir "admin" $ dir "edit" $ path $ \docId -> dir "delete" $ nullDir >> requireLogin authConf >> (require (deleteDocument docId) $ \_ -> tempRedirect "/admin/" $ toResponse "")
+adminHandler authConf db = dir "admin" $ msum [
+  dir "login" $ nullDir >> handleLoginForm authConf,
+  requireLogin authConf >> msum [
+    dir "logout" $ nullDir >> handleLogout,
+    optPageNum $ \pageNum -> nullDir >> handleAdminPage pageNum db,
+    dir "edit" $ path $ \docId -> nullDir >> (require (loadDocForEditing docId) $ \doc -> handleEditPage db (Just doc)),
+    dir "edit" $ nullDir >> handleEditPage db Nothing,
+    dir "edit" $ path $ \docId -> dir "delete" $ nullDir >> (require (deleteDocument docId) $ \_ -> tempRedirect "/admin/" $ toResponse "")
+    ],
+  handleNotFound authConf
   ]
   where
     loadDocForEditing :: Int -> IO (Maybe (Document, [String]))
@@ -142,4 +152,3 @@ adminHandler authConf db = msum [
       case mdoc of
         Nothing -> return Nothing
         Just doc -> DB.deleteDocument db doc >> (return $ Just ())
-
