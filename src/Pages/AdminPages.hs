@@ -22,6 +22,10 @@ import Presentation.DocEditor
 import Presentation.Toolbar
 import Data.Maybe
 import TextUtils.Editing(toEditor, removeSpaces, fromEditor)
+import Search.Index(Index)
+import qualified Search.Index as Index
+import Data.IORef(IORef, atomicModifyIORef)
+
 
 handleLoginForm :: AuthConf -> ServerPart Response
 handleLoginForm conf = do
@@ -62,7 +66,7 @@ handleAdminPage :: PageNumber -> DB.Database -> ServerPart Response
 handleAdminPage pageNumber db =
   require (Just <$> DB.queryDocuments db DB.All range) $ \(docs, total) -> do
     ok $ toResponse $ appLayout "Admin" "" $ do
-      toolbar [Action "/admin/edit" "New document", Action "/admin/logout" "Logout"]
+      toolbar [Action "/admin/edit" "New document", Action "/admin/build-index" "Rebuild index", Action "/admin/logout" "Logout"]
       smallDocumentsList urlFormatter docs (50 * (fromPageNumber pageNumber - 1) + 1)
       paginator pageUrlFormatter (fromPageNumber pageNumber) $ pagesCount total
   where
@@ -124,10 +128,11 @@ handleNotFound conf = do
     else tempRedirect "/admin/login" $ toResponse ""
 
 
-adminHandler :: AuthConf -> DB.Database -> ServerPart Response
-adminHandler authConf db = dir "admin" $ msum [
+adminHandler :: AuthConf -> DB.Database -> IORef (Maybe Index) -> ServerPart Response
+adminHandler authConf db indexRef = dir "admin" $ msum [
   dir "login" $ nullDir >> handleLoginForm authConf,
   requireLogin authConf >> msum [
+    dir "build-index" $ nullDir >> (require buildIndex $ \_ -> tempRedirect "/admin/" $ toResponse ""),
     dir "logout" $ nullDir >> handleLogout,
     optPageNum $ \pageNum -> nullDir >> handleAdminPage pageNum db,
     dir "edit" $ path $ \docId -> nullDir >> (require (loadDocForEditing docId) $ \doc -> handleEditPage db (Just doc)),
@@ -152,3 +157,14 @@ adminHandler authConf db = dir "admin" $ msum [
       case mdoc of
         Nothing -> return Nothing
         Just doc -> DB.deleteDocument db doc >> (return $ Just ())
+
+    buildIndex :: IO (Maybe ())
+    buildIndex = do
+      maybeIndex <- atomicModifyIORef indexRef (\index -> (Nothing, index))
+      case maybeIndex of
+        Nothing -> return Nothing
+        Just index -> do
+          newIndex <- Index.buildIndex index db
+          atomicModifyIORef indexRef (\_ -> (Just newIndex, ()))
+          return $ Just ()
+

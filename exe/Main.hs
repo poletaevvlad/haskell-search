@@ -45,5 +45,5 @@ main = do
     removeTrailingSlash,
     documentsIndexHandler db indexRef,
     documentPageHandler db,
-    adminHandler authConf db,
+    adminHandler authConf db indexRef,
     dir "static" $ serveDirectory DisableBrowsing [] static_dir]
