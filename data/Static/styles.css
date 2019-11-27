@@ -230,6 +230,7 @@ input[type=password], input[type=text]{
 
 .toolbar{
     text-align: right;
+    margin: 20px 0;
 }
 
 ol, ul, li{
