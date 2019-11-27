@@ -62,6 +62,7 @@ handleAdminPage :: PageNumber -> DB.Database -> ServerPart Response
 handleAdminPage pageNumber db =
   require (Just <$> DB.queryDocuments db DB.All range) $ \(docs, total) -> do
     ok $ toResponse $ appLayout "Admin" "" $ do
+      toolbar [Action "/admin/edit" "New document", Action "/admin/logout" "Logout"]
       smallDocumentsList urlFormatter docs (50 * (fromPageNumber pageNumber - 1) + 1)
       paginator pageUrlFormatter (fromPageNumber pageNumber) $ pagesCount total
   where
