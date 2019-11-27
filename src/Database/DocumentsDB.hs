@@ -132,7 +132,10 @@ updateDocument (Database path conn) doc title contents = do
   SQLite.execute conn "UPDATE documents SET url = ?, name = ?, excerpt = ?, fileSize = ?, wordsCount = ? \
                       \WHERE rowid = ?" ( getDocUrl newDoc, getDocName newDoc, getDocExcerpt newDoc
                                         , getDocFileSize newDoc, getDocWordsCount newDoc, getDocId newDoc)
-  writeFile (path ++ "/docs/" ++ (show $ getDocId newDoc)) (fileContents ++ "\n")
+  let fileName = path ++ "/docs/" ++ (show $ getDocId newDoc)
+  let tempFileName = fileName ++ "-temp"
+  writeFile tempFileName $ fileContents ++ "\n"
+  renameFile tempFileName fileName
   return newDoc
 
 deleteDocument :: Database -> Document -> IO ()

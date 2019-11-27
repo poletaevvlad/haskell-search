@@ -15,7 +15,7 @@ import Pages.Auth (AuthConf(auConfTimeOut), checkPassword, generateAuthSecret)
 import TextUtils.Processing(hexEncode)
 import Data.Time.Clock (nominalDiffTimeToSeconds)
 import Pages.Auth (requireLogin, isLoggedIn)
-import Database.Documents(Document(getDocId, getDocName))
+import Database.Documents(Document(getDocId, getDocName, getDocUrl))
 import Pages.DocumentsIndex(optPageNum, PageNumber(..))
 import qualified Database.DocumentsDB as DB
 import Presentation.DocEditor
@@ -73,8 +73,8 @@ handleAdminPage pageNumber db =
     pagesCount total = ceiling $ fromIntegral total / (50 :: Double)
 
 
-handleEditPage :: Maybe (Document, [String]) -> ServerPart Response
-handleEditPage mdoc = do
+handleEditPage :: DB.Database -> Maybe (Document, [String]) -> ServerPart Response
+handleEditPage db mdoc = do
   msum [ method POST >> decodeBody (defaultBodyPolicy "/tmp/" 0 10485760 1024) >> (do
       title <- removeSpaces <$> look "title"
       content <- look "text"
@@ -83,7 +83,12 @@ handleEditPage mdoc = do
         ("", _) -> return $ Just "Title must not be empty"
         (_, []) -> return $ Just "Document body must not be empty"
         _ -> return $ Nothing
-      renderEditPage error title content),
+      if isNothing error
+        then
+          let addDocument = (case mdoc of Nothing -> DB.storeDocument db title parsedContent
+                                          Just (doc, _) -> DB.updateDocument db doc title parsedContent)
+          in require (Just <$> addDocument) $ \newDoc -> tempRedirect ("/doc/" ++ (getDocUrl newDoc)) $ toResponse ""
+        else renderEditPage error title content),
     (case mdoc of
       Nothing -> renderEditPage Nothing "" ""
       Just (doc, content) -> renderEditPage Nothing (getDocName doc) $ toEditor content 80)]
@@ -106,8 +111,8 @@ adminHandler authConf db = msum [
   dir "admin" $ dir "login" $ handleLoginForm authConf,
   dir "admin" $ dir "logout" $ handleLogout,
   dir "admin" $ optPageNum $ \pageNum -> requireLogin authConf >> handleAdminPage pageNum db,
-  dir "admin" $ dir "edit" $ path $ \docId -> require (loadDocForEditing docId) $ \doc -> requireLogin authConf >> handleEditPage (Just doc),
-  dir "admin" $ dir "edit" $ nullDir >> requireLogin authConf >> handleEditPage Nothing
+  dir "admin" $ dir "edit" $ path $ \docId -> require (loadDocForEditing docId) $ \doc -> requireLogin authConf >> handleEditPage db (Just doc),
+  dir "admin" $ dir "edit" $ nullDir >> requireLogin authConf >> handleEditPage db Nothing
   ]
 
   where
