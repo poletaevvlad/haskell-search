@@ -115,7 +115,16 @@ spec = do
       res `shouldBe` [1]
     it "should not return document containing less then three quaters of the request words (1)" $ do
       res <- withIndex (\index -> getRequestDocIds [2, 3, 4, 0] index)
-      res `shouldBe` [1, 2]
+      res `shouldBe` [2, 1]
     it "should not return document containing less then three quaters of the request words (2)" $ do
       res <- withIndex (\index -> getRequestDocIds [0, 1, 2] index)
-      res `shouldBe` [1, 3]
+      res `shouldBe` [3, 1]
+
+  describe "computeDocumentRank" $ do
+    it "returns the number of terms if the only term is present" $ do
+      computeDocumentRank [1, 2, 3] [(2, [4, 6, 8])] `shouldBe` (1, 1.0 / 3.0)
+    it "returns the score if multiple terms are present" $ do
+      -- 2-4  2 * 2 = 4
+      -- 2-5  1 * 3 = 3
+      -- 4-5  3 * 1 = 3
+      computeDocumentRank [1, 2, 3, 4, 5] [(2, [4, 6, 8, 16, 20]), (4, [12, 14]), (5, [17, 5])] `shouldBe` (3, 10)

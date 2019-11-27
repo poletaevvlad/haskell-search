@@ -1,5 +1,6 @@
 module Search.Index(buildIndex, loadStopWords, Index(..), loadIndex,
-  createIndex, closeIndex, processQuery, getRequestDocs, getRequestDocIds) where
+  createIndex, closeIndex, processQuery, getRequestDocs, getRequestDocIds,
+  computeDocumentRank) where
 
 import Control.Monad.State.Lazy
 import Database.DocumentsDB (Database, queryAllTexts)
@@ -16,8 +17,9 @@ import qualified Data.Set as Set
 import Paths_webse
 import System.Directory (doesFileExist)
 import Data.Maybe (fromJust, isJust, isNothing)
-import Data.IntMap(IntMap)
+import Data.IntMap(IntMap, (!))
 import qualified Data.IntMap as IntMap
+import TextUtils.ListUtils
 
 
 data Index =
@@ -98,11 +100,30 @@ processQuery text index =
     strToWords = map porter . splitWords . filterChars
 
 
+computeDocumentRank :: [Int] -> [(Int, [Int])] -> (Int, Float)
+computeDocumentRank request entries =
+  if null $ tail entries
+    then (1, 1.0 / (fromIntegral $ length $ snd $ head entries))
+    else let entriesMap = IntMap.fromList entries
+             termPairs = pairs $ IntMap.keys entriesMap
+             distances = map (\(t1, t2) -> let termDist = minTermDistance (entriesMap ! t1) (entriesMap ! t2)
+                                               queryDist = minQueryDistance request t1 t2
+                                           in fromIntegral termDist * fromIntegral queryDist) termPairs
+         in (IntMap.size entriesMap, sum distances)
+
+
 getRequestDocIds :: [Int] -> Index -> IO [Int]
 getRequestDocIds request index = do
   let requiredCount = round $ (fromIntegral $ length request) * (0.75 :: Double)
-  reqDocs <- IntMap.filter (\x -> length x >= requiredCount) <$> getRequestDocs request index
-  return $ IntMap.keys reqDocs
+  reqDocs <- IntMap.filter (\x -> length x >= requiredCount) <$> getRequestDocs request index :: IO (IntMap [(Int, II.DocIndexEntry)])
+  docsWithPos <- sequence $ IntMap.map loadPositions reqDocs :: IO (IntMap [(Int, [Int])])
+  return $ sortByKey (\docId -> computeDocumentRank request $ docsWithPos ! docId) $ IntMap.keys docsWithPos
+  where
+    loadPositions :: [(Int, II.DocIndexEntry)] -> IO [(Int, [Int])]
+    loadPositions entries = sequence $ map (\(termId, entry) ->
+      do
+        positions <- II.getPositions entry (fromJust $ indexInvIndex index)
+        return (termId, positions)) entries
 
 
 getRequestDocs :: [Int] -> Index -> IO (IntMap [(Int, II.DocIndexEntry)])

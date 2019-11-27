@@ -1,4 +1,5 @@
-module TextUtils.ListUtils(minTermDistance, minQueryDistance, pairs) where
+module TextUtils.ListUtils(minTermDistance, minQueryDistance, pairs, sortByKey) where
+import Data.List(sort)
 
 
 posDistances :: [Int] -> [Int] -> [Int]
@@ -26,3 +27,15 @@ minQueryDistance query t1 t2 = let l1 = getPositions query t1
 pairs :: [a] -> [(a, a)]
 pairs [] = []
 pairs (x:xs) = (zip (repeat x) xs) ++ pairs xs
+
+
+data (Ord b) => Sortable b a = Sortable b a
+
+instance (Ord b) => Eq (Sortable b a) where
+  (Sortable x _) == (Sortable y _) = x == y
+
+instance (Ord b) => Ord (Sortable b a) where
+  compare (Sortable x _) (Sortable y _) = compare x y
+
+sortByKey :: (Ord b) => (a -> b) -> [a] -> [a]
+sortByKey p list = map (\(Sortable _ x) -> x) $ sort $ map (\x -> Sortable (p x) x) list
