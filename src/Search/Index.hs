@@ -100,7 +100,7 @@ processQuery text index =
     strToWords = map porter . splitWords . filterChars
 
 
-computeDocumentRank :: [Int] -> [(Int, [Int])] -> (Int, Float)
+computeDocumentRank :: [Int] -> [(Int, [Int])] -> (Float, Float)
 computeDocumentRank request entries =
   if null $ tail entries
     then (1, 1.0 / (fromIntegral $ length $ snd $ head entries))
@@ -109,7 +109,7 @@ computeDocumentRank request entries =
              distances = map (\(t1, t2) -> let termDist = minTermDistance (entriesMap ! t1) (entriesMap ! t2)
                                                queryDist = minQueryDistance request t1 t2
                                            in fromIntegral termDist * fromIntegral queryDist) termPairs
-         in (IntMap.size entriesMap, sum distances)
+         in (1.0 / (fromIntegral $ IntMap.size entriesMap), sum distances)
 
 
 getRequestDocIds :: [Int] -> Index -> IO [Int]
