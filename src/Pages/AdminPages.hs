@@ -119,13 +119,13 @@ handleEditPage db mdoc = do
 
 adminHandler :: AuthConf -> DB.Database -> ServerPart Response
 adminHandler authConf db = msum [
-  dir "admin" $ dir "login" $ handleLoginForm authConf,
-  dir "admin" $ dir "logout" $ handleLogout,
+  dir "admin" $ dir "login" $ nullDir >> handleLoginForm authConf,
+  dir "admin" $ dir "logout" $ nullDir >> handleLogout,
   dir "admin" $ optPageNum $ \pageNum -> requireLogin authConf >> handleAdminPage pageNum db,
-  dir "admin" $ dir "edit" $ path $ \docId -> require (loadDocForEditing docId) $ \doc -> requireLogin authConf >> handleEditPage db (Just doc),
-  dir "admin" $ dir "edit" $ nullDir >> requireLogin authConf >> handleEditPage db Nothing
+  dir "admin" $ dir "edit" $ path $ \docId -> nullDir >> (require (loadDocForEditing docId) $ \doc -> requireLogin authConf >> handleEditPage db (Just doc)),
+  dir "admin" $ dir "edit" $ nullDir >> requireLogin authConf >> handleEditPage db Nothing,
+  dir "admin" $ dir "edit" $ path $ \docId -> dir "delete" $ nullDir >> requireLogin authConf >> (require (deleteDocument docId) $ \_ -> tempRedirect "/admin/" $ toResponse "")
   ]
-
   where
     loadDocForEditing :: Int -> IO (Maybe (Document, [String]))
     loadDocForEditing docId = do
@@ -135,3 +135,11 @@ adminHandler authConf db = msum [
         Just doc -> do
           content <- DB.getDocumentContent db doc
           return $ Just (doc, content)
+
+    deleteDocument :: Int -> IO (Maybe ())
+    deleteDocument docId = do
+      mdoc <- DB.getDocumentById db docId
+      case mdoc of
+        Nothing -> return Nothing
+        Just doc -> DB.deleteDocument db doc >> (return $ Just ())
+
