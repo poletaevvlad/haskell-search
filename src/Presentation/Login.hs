@@ -3,7 +3,7 @@
 module Presentation.Login (loginForm) where
 
 import Text.Blaze ((!))
-import Text.Blaze(string, toValue)
+import Text.Blaze(string)
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 
