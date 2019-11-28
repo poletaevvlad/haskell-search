@@ -91,3 +91,17 @@ spec = do
       let ini = "[auth]\nsecret = 000102030405060708090a0b0c0d0e0f\nsession-timeout = 100\npassword-hash = 505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f\n"
       let Left message = parseIniFile (pack ini) authConfigParser
       message `shouldBe` "Line 2, in section \"auth\": The string must be 32 bytes"
+
+  describe "configParser" $ do
+    it "should parse config file" $ do
+      let ini = "[docs]\npath = /path/to/directory/\n\
+                \[auth]\nsecret = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\n\
+                         \password-hash = 505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f\n\
+                         \session-timeout = 200\n\
+                \[net]\nport=4000\ntimeout=100\n"
+      let Right (netConf, authConf, path) = parseIniFile (pack ini) configParser
+      path `shouldBe` "/path/to/directory/"
+      authConf `shouldBe` AuthConf { auConfTimeOut = secondsToNominalDiffTime $ 200
+                                   , auConfSecret = ByteString.pack [0x00..0x1F]
+                                   , auConfPasswordHash = ByteString.pack [0x50..0x6F] }
+      (port netConf, timeout netConf) `shouldBe` (4000, 100)

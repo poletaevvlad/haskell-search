@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Service.Config (parsePort, parseInterval, netConfigParser,
-  authConfigParser) where
+  authConfigParser, configParser) where
 
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -76,3 +76,12 @@ authConfigParser =
     return AuthConf { auConfTimeOut = secondsToNominalDiffTime $ fromIntegral timeout
                     , auConfSecret = secret
                     , auConfPasswordHash = password }
+
+
+configParser :: IniParser (Conf, AuthConf, FilePath)
+configParser = do
+  netConf <- netConfigParser
+  authConf <- authConfigParser
+  path <- Text.unpack <$> (section "docs" $ field "path")
+  return (netConf, authConf, path)
+
