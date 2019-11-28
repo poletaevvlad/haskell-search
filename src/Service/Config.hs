@@ -1,10 +1,13 @@
-module Service.Config (parsePort, parseInterval) where
+{-# LANGUAGE OverloadedStrings #-}
+module Service.Config (parsePort, parseInterval, netConfigParser) where
 
 import Data.Text (Text)
 import qualified Data.Text as Text
 import Text.Read (readMaybe)
 import Data.Char (isNumber)
 import Data.List (span)
+import Data.Ini.Config
+import Happstack.Server(Conf(port, timeout), nullConf)
 
 
 parsePort :: Text -> Either String Int
@@ -35,3 +38,16 @@ parseInterval text = do
     parseSuffix "h" = Right $ 60 * 60
     parseSuffix "d" = Right $ 60 * 60 * 24
     parseSuffix unit = Left $ "Unknown unit: '" ++ unit ++ "'"
+
+
+netConfigParser :: IniParser Conf
+netConfigParser =
+  sectionDef "net" defaultConf $ do
+    port <- fieldDefOf "port" parsePort defaultPort
+    timeout <- fieldDefOf "timeout" parseInterval defaultTimeout
+    return nullConf { port = port, timeout = timeout }
+  where
+    defaultConf = nullConf { port = defaultPort, timeout = defaultTimeout }
+    defaultPort = 8080
+    defaultTimeout = 300
+
