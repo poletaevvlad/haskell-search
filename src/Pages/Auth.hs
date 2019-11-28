@@ -1,6 +1,6 @@
 module Pages.Auth (AuthConf(..), Token(Token), TokenStruct(TokenStruct),
   AuthSecret(AuthSecret), validateAuthSecret, generateAuthSecret,
-  checkPassword, requireLogin, isLoggedIn) where
+  checkPassword, requireLogin, isLoggedIn, generateRandom) where
 
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString as BSStrict

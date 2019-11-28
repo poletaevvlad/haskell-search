@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Service.Config (parsePort, parseInterval, netConfigParser,
-  authConfigParser, configParser) where
+  authConfigParser, loadConfig) where
 
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -11,9 +11,13 @@ import Data.Ini.Config
 import Happstack.Server(Conf(port, timeout), nullConf)
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as ByteString
-import TextUtils.Processing (hexDecode)
-import Pages.Auth (AuthConf(..))
+import TextUtils.Processing (hexDecode, hexEncode)
+import Pages.Auth (AuthConf(..), generateRandom)
 import Data.Time.Clock (secondsToNominalDiffTime)
+import Crypto.Random (newGenIO)
+import Crypto.Random.DRBG (HmacDRBG)
+import System.Directory (getXdgDirectory, XdgDirectory(XdgData), doesFileExist)
+
 
 
 parsePort :: Text -> Either String Int
@@ -84,4 +88,33 @@ configParser = do
   authConf <- authConfigParser
   path <- Text.unpack <$> (section "docs" $ field "path")
   return (netConf, authConf, path)
+
+
+generageInitialConfig :: IO String
+generageInitialConfig = do
+  dataDir <- getXdgDirectory XdgData "webse"
+  secret <- fst <$> generateRandom 32 <$> (newGenIO :: IO HmacDRBG)
+  return $ mconcat [ section "docs"
+                   , keyValue "path" $ dataDir
+                   , section "auth"
+                   , keyValue "secret" $ hexEncode secret
+                   , keyValue "password-hash" $ hexEncode $ ByteString.pack $ take 32 $ repeat 0 ]
+
+  where
+    section :: String -> String
+    section name = '[':name ++ "]\n"
+    keyValue :: String -> String -> String
+    keyValue key value = key ++ " = " ++ value ++ "\n"
+
+
+loadConfig :: FilePath -> IO (Either String (Conf, AuthConf, FilePath))
+loadConfig path = do
+  fileExist <- doesFileExist path
+  fileContents <- if fileExist
+    then readFile path
+    else do
+      config <- generageInitialConfig
+      writeFile path config
+      return config
+  return $ parseIniFile (Text.pack fileContents) configParser
 
