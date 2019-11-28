@@ -69,7 +69,8 @@ library webse-lib
                        Search.InvertedIndex,
                        Search.IndexBuilding,
                        Search.Index,
-                       Pages.Auth
+                       Pages.Auth,
+                       Service.Config
   other-modules:       Paths_webse
   hs-source-dirs:      src
 
@@ -100,7 +101,8 @@ test-suite spec
                        bytestring >= 0.10.0.0,
                        containers >= 0.6.0.0,
                        cipher-aes >= 0.2.11,
-                       time >= 1.9.0
+                       time >= 1.9.0,
+                       text >= 1.2.0.0
   other-modules:       Presentation.LayoutSpec,
                        Presentation.DocViewsSpec,
                        Presentation.AlphabeticalIndexSpec,
@@ -120,5 +122,6 @@ test-suite spec
                        Search.InvertedIndexSpec,
                        Search.IndexBuildingSpec,
                        Search.IndexSpec,
-                       Pages.AuthSpec
+                       Pages.AuthSpec,
+                       Service.ConfigSpec
   build-tool-depends:  hspec-discover:hspec-discover == 2.*
