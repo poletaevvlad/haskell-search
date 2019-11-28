@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Service.Config (parsePort, parseInterval, netConfigParser) where
+module Service.Config (parsePort, parseInterval, netConfigParser,
+  authConfigParser) where
 
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -8,6 +9,11 @@ import Data.Char (isNumber)
 import Data.List (span)
 import Data.Ini.Config
 import Happstack.Server(Conf(port, timeout), nullConf)
+import Data.ByteString.Lazy (ByteString)
+import qualified Data.ByteString.Lazy as ByteString
+import TextUtils.Processing (hexDecode)
+import Pages.Auth (AuthConf(..))
+import Data.Time.Clock (secondsToNominalDiffTime)
 
 
 parsePort :: Text -> Either String Int
@@ -40,6 +46,15 @@ parseInterval text = do
     parseSuffix unit = Left $ "Unknown unit: '" ++ unit ++ "'"
 
 
+parseHexadecimal :: Int -> Text -> Either String ByteString
+parseHexadecimal length text = case hexDecode $ Text.unpack text of
+  Nothing -> Left "Not a hexadecimal string"
+  Just byteString -> do
+    let len = fromIntegral $ ByteString.length byteString :: Int
+    errorIf (len /= length) ("The string must be " ++ show length ++ " bytes")
+    return byteString
+
+
 netConfigParser :: IniParser Conf
 netConfigParser =
   sectionDef "net" defaultConf $ do
@@ -51,3 +66,13 @@ netConfigParser =
     defaultPort = 8080
     defaultTimeout = 300
 
+
+authConfigParser :: IniParser AuthConf
+authConfigParser =
+  section "auth" $ do
+    timeout <- fieldDefOf "session-timeout" parseInterval (60 * 60 * 24)
+    secret <- fieldOf "secret" $ parseHexadecimal 32
+    password <- fieldOf "password-hash" $ parseHexadecimal 32
+    return AuthConf { auConfTimeOut = secondsToNominalDiffTime $ fromIntegral timeout
+                    , auConfSecret = secret
+                    , auConfPasswordHash = password }

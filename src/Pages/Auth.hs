@@ -27,7 +27,8 @@ import Control.Monad.IO.Class (MonadIO)
 data AuthConf =
   AuthConf { auConfTimeOut :: NominalDiffTime
            , auConfSecret :: ByteString
-           , auConfPasswordHash :: ByteString }
+           , auConfPasswordHash :: ByteString
+           } deriving (Show, Eq)
 
 
 data Token = Token ByteString deriving (Show, Eq)

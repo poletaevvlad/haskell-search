@@ -5,6 +5,10 @@ import Service.Config
 import Data.Text
 import Happstack.Server (Conf(..))
 import Data.Ini.Config
+import qualified Data.ByteString.Lazy as ByteString
+import Data.Time.Clock (secondsToNominalDiffTime)
+import Pages.Auth (AuthConf(..))
+
 
 
 spec :: Spec
@@ -58,3 +62,32 @@ spec = do
       let Left message = (parseIniFile (pack "[net]\nport = abc\n") netConfigParser)
       message `shouldBe` "Line 2, in section \"net\": Port number must be an integer"
 
+  describe "authConfigParser" $ do
+    it "should parse auth config" $ do
+      let ini = "[auth]\nsecret = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\nsession-timeout = 100\npassword-hash = 505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f\n"
+      let Right authConf = parseIniFile (pack ini) authConfigParser
+      authConf `shouldBe` AuthConf { auConfTimeOut = secondsToNominalDiffTime 100
+                                   , auConfSecret = ByteString.pack [0x00..0x1F]
+                                   , auConfPasswordHash = ByteString.pack [0x50..0x6F] }
+    it "should use default value for timeout" $ do
+      let ini = "[auth]\nsecret = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\npassword-hash = 505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f\n"
+      let Right authConf = parseIniFile (pack ini) authConfigParser
+      authConf `shouldBe` AuthConf { auConfTimeOut = secondsToNominalDiffTime $ 60 * 60 * 24
+                                   , auConfSecret = ByteString.pack [0x00..0x1F]
+                                   , auConfPasswordHash = ByteString.pack [0x50..0x6F] }
+    it "should fail if no secret is present" $ do
+      let ini = "[auth]\nsession-timeout = 100\npassword-hash = 505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f\n"
+      let Left message = parseIniFile (pack ini) authConfigParser
+      message `shouldBe` "Missing field \"secret\" in section \"auth\""
+    it "should fail if no password is present" $ do
+      let ini = "[auth]\nsession-timeout = 100\nsecret = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\n"
+      let Left message = parseIniFile (pack ini) authConfigParser
+      message `shouldBe` "Missing field \"password-hash\" in section \"auth\""
+    it "should fail if password has wrong length present" $ do
+      let ini = "[auth]\nsecret = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\nsession-timeout = 100\npassword-hash = 505152535455565758595a5b5c5d5e5f\n"
+      let Left message = parseIniFile (pack ini) authConfigParser
+      message `shouldBe` "Line 4, in section \"auth\": The string must be 32 bytes"
+    it "should fail if secret has wrong length present" $ do
+      let ini = "[auth]\nsecret = 000102030405060708090a0b0c0d0e0f\nsession-timeout = 100\npassword-hash = 505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f\n"
+      let Left message = parseIniFile (pack ini) authConfigParser
+      message `shouldBe` "Line 2, in section \"auth\": The string must be 32 bytes"
