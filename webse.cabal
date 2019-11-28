@@ -82,7 +82,7 @@ executable webse
   other-modules:       Paths_webse
   build-depends:       happstack-server >= 7.4.0,
                        webse-lib,
-                       bytestring >= 0.10.0.0,
+                       directory >= 1.3.0.0
   hs-source-dirs:      exe
 
 
