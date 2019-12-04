@@ -19,6 +19,8 @@ import Data.Text(pack)
 import qualified Data.IntMap as IntMap
 import Data.Maybe (isJust, fromJust)
 import Control.Monad (when)
+import System.IO (hGetContents, withFile, IOMode(ReadMode))
+import Control.DeepSeq (($!!))
 
 data Database = Database FilePath SQLite.Connection
 
@@ -84,7 +86,9 @@ getDocumentsByIds (Database _ conn) ids = do
 getDocumentContentById :: Database -> Int -> IO [String]
 getDocumentContentById (Database path _) docId = do
   let filePath = path ++ "/docs/" ++ (show docId)
-  lines <$> (readFile filePath)
+  withFile filePath ReadMode $ \handle -> do
+    text <- hGetContents handle
+    return $!! (lines text)
 
 
 getDocumentContent :: Database -> Document -> IO [String]

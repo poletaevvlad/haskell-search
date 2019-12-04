@@ -47,7 +47,8 @@ library webse-lib
                        DRBG >= 0.5.0,
                        cryptohash >= 0.11.0,
                        utf8-string >= 1.0.1.0,
-                       config-ini >= 0.2.4.0
+                       config-ini >= 0.2.4.0,
+                       deepseq >= 1.4.0.0
   exposed-modules:     Presentation.Layout,
                        Presentation.DocViews,
                        Presentation.AlphabeticalIndex,
